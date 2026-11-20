@@ -1082,4 +1082,6 @@ try{if(!state.achInit)checkAch()}catch(e){}
 ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.restEnd=0;
 render();
 }
+const BUILD="2026-11-20b";
+(function(){if(location.protocol!=="https:"||window.claude)return;const k="trk-upd";fetch(location.pathname+"?u="+Date.now(),{cache:"reload"}).then(r=>r.text()).then(t=>{const m=t.match(/const BUILD="([^"]+)"/);if(m&&m[1]!==BUILD&&sessionStorage.getItem(k)!==m[1]){sessionStorage.setItem(k,m[1]);fetch(location.pathname,{cache:"reload"}).finally(()=>{try{toast("✨ Updating to the newest version…","good")}catch(e){}setTimeout(()=>location.reload(),700)})}}).catch(()=>{})})();
 </script></body></html>
