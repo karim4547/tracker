@@ -275,12 +275,12 @@ function aoRefresh(){const b=document.getElementById("aob");if(b)b.innerHTML=aoB
 const ingOf=id=>state.ing.find(x=>x.id===id);
 function mbRows(){if(!ui.mb||!ui.mb.rows)ui.mb={rows:[{cat:"Carbs",id:"",g:""},{cat:"Protein",id:"",g:""},{cat:"Fats & oils",id:"",g:""}],name:""};return ui.mb.rows}
 const PREP=[["","Plain (as cooked)"],["deep","Pané · deep-fried"],["pan","Pané · pan-fried"],["airs","Pané · air-fried + oil spray"],["air","Pané · air-fried, no oil"]],PREPO={deep:9,pan:6,airs:1,air:0},PREPN={deep:"deep-fried",pan:"pan-fried",airs:"air-fried",air:"air-fried"};
-function prepAdd(pr,g){if(!pr||!(pr in PREPO))return null;const s=g/100,o=PREPO[pr];return{k:(70+o*8.84)*s,p:2.8*s,c:11.6*s,f:(1.2+o)*s,g:(20+o)*s}}
+function prepAdd(pr,W){if(!pr||!(pr in PREPO))return null;const o=PREPO[pr],m=W/(1.2+o/100),s=m/100;return{m,cg:20*s,og:o*s,k:(70+o*8.84)*s,p:2.8*s,c:11.6*s,f:(1.2+o)*s}}
 const isProt=r=>r.cat==="Protein"||(!r.cat&&ingOf(r.id)&&ingOf(r.id).cat==="Protein");
-function mbTot(){const t={k:0,p:0,c:0,f:0,g:0};for(const r of mbRows()){const x=ingOf(r.id),g=parseFloat(r.g)||0;if(!x||!g)continue;t.k+=x.k*g/100;t.p+=x.p*g/100;t.c+=x.c*g/100;t.f+=x.f*g/100;t.g+=g;const a=isProt(r)&&prepAdd(r.pr,g);if(a){t.k+=a.k;t.p+=a.p;t.c+=a.c;t.f+=a.f;t.g+=a.g}}return t}
+function mbTot(){const t={k:0,p:0,c:0,f:0,g:0};for(const r of mbRows()){const x=ingOf(r.id),g=parseFloat(r.g)||0;if(!x||!g)continue;const a=isProt(r)&&prepAdd(r.pr,g),m=a?a.m:g;t.k+=x.k*m/100;t.p+=x.p*m/100;t.c+=x.c*m/100;t.f+=x.f*m/100;t.g+=g;if(a){t.k+=a.k;t.p+=a.p;t.c+=a.c;t.f+=a.f}}return t}
 function mbName(){const R=mbRows().filter(r=>ingOf(r.id)&&parseFloat(r.g)),pick=c=>R.filter(r=>ingOf(r.id).cat===c).map(r=>ingOf(r.id).n.replace(/\s*\(.*?\)/g,"").replace(/,\s*lean$/,"")+(c==="Protein"&&PREPN[r.pr]?` pané (${PREPN[r.pr]})`:""));const main=[...pick("Protein"),...pick("Carbs")],fat=pick("Fats & oils");return(main.join(" + ")||R.map(r=>ingOf(r.id).n.replace(/\s*\(.*?\)/g,"")).slice(0,3).join(" + ")||"Meal")+(fat.length?` (${fat.join(", ").toLowerCase()})`:"")}
 function mbTotals(){const t=mbTot();return `<div class="mbt"><div><b class="num">${fmt(t.k)}</b><span class="mut sm">kcal</span></div><div><b class="num">${r1(t.p)}</b><span class="mut sm">protein</span></div><div><b class="num">${r1(t.c)}</b><span class="mut sm">carbs</span></div><div><b class="num">${r1(t.f)}</b><span class="mut sm">fat</span></div></div><p class="mut sm">${fmt(t.g)} g total${t.k?` · ${r1(t.p/t.k*100)} g protein per 100 kcal`:""}</p>`}
-function prepNote(r){const g=parseFloat(r.g)||0,a=prepAdd(r.pr,g||100);if(!a)return"Breaded (pané)? Pick how it's fried to add the coating and oil.";return`Coating (flour, egg, breadcrumbs)${PREPO[r.pr]?` + about ${r1(PREPO[r.pr]*(g||100)/100)} g oil soaked up`:""}: <b>+${fmt(a.k)} kcal</b>${g?"":" per 100 g"}. Enter the meat's weight, not the breaded cutlet.`}
+function prepNote(r){const g=parseFloat(r.g)||0,a=prepAdd(r.pr,g||100),x=ingOf(r.id);if(!a)return"Breaded (pané)? Pick how it's fried, then weigh the whole cooked cutlet.";const raw=x&&/raw/i.test(x.n);const tot=x?x.k*a.m/100+a.k:null;return`Weigh the <b>whole cooked cutlet</b>, breading included.${g?` That's about ${fmt(a.m)} g meat + ${fmt(a.cg)} g coating${a.og>=0.5?` + ${r1(a.og)} g oil`:""}${tot!=null?`: <b>${fmt(tot)} kcal</b>`:""}.`:tot!=null?` About <b>${fmt(tot)} kcal per 100 g</b> of cutlet.`:""}${raw?` <span class="bad">Pick the <i>cooked</i> version of the meat for pané.</span>`:""}`}
 function vBuilder(){
   const rows=mbRows(),opt=(cat,id)=>(cat?[cat]:CATS).map(c=>{const L=state.ing.filter(x=>x.cat===c).sort((a,b)=>a.n.localeCompare(b.n));return L.length?`<optgroup label="${c}">${L.map(x=>`<option value="${x.id}" ${x.id===id?"selected":""}>${esc(x.n)}</option>`).join("")}</optgroup>`:""}).join("");
   const lab={"Carbs":"Carb","Protein":"Protein","Fats & oils":"Cooked with"};
@@ -1167,6 +1167,6 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-20e";
+const BUILD="2026-11-20f";
 (function(){if(location.protocol!=="https:"||window.claude)return;const k="trk-upd";fetch(location.pathname+"?u="+Date.now(),{cache:"reload"}).then(r=>r.text()).then(t=>{const m=t.match(/const BUILD="([^"]+)"/);if(m&&m[1]!==BUILD&&sessionStorage.getItem(k)!==m[1]){sessionStorage.setItem(k,m[1]);fetch(location.pathname,{cache:"reload"}).finally(()=>{try{toast("✨ Updating to the newest version…","good")}catch(e){}setTimeout(()=>location.reload(),700)})}}).catch(()=>{})})();
 </script></body></html>
