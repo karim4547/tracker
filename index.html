@@ -178,6 +178,7 @@ main.enter .mz{animation:fade .6s both}
 .wts{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:10px}.wt{display:grid;gap:1px;background:var(--soft);border-radius:12px;padding:9px 10px}.wt b{font:700 24px "Barlow Condensed",sans-serif}
 main.enter .wt{animation:pop .4s both}
 .guide{padding-left:20px;display:grid;gap:8px;font-size:15px;line-height:1.45}.tpl{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px;white-space:pre-wrap;margin:8px 0;user-select:all}
+.pulse{animation:pulse 1.4s ease-in-out infinite}@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgb(29 148 72/.55)}50%{box-shadow:0 0 0 10px rgb(29 148 72/0)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(max-width:600px){.hero{grid-template-columns:1fr}.big{font-size:36px}h1{font-size:26px}.setin{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}.setin button{grid-column:1/-1}.f5{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:no-preference){.arc{transition:stroke-dasharray .6s ease}}
@@ -315,10 +316,11 @@ function recovery(d){const h=hkD(d),S=state.settings,sl=((state.hab||{})[d]||{})
   return{sc,lv,why,base:!!(bh||br)}}
 function burnTD(S){const td=new Date();td.setHours(0,0,0,0);const v=[];for(let i=1;i<=14;i++){const x=new Date(td);x.setDate(x.getDate()-i);const h=hkD(ymd(x));if(h.active!=null&&h.basal!=null&&h.basal>800)v.push(h.active+h.basal)}
   if(S.burn!=="est"&&v.length>=3){const raw=v.reduce((a,b)=>a+b,0)/v.length;return{v:raw*(S.wf||0.9),src:`Apple Watch, ${v.length}-day average`,n:v.length}}return{v:tdeeOf(S),src:"estimate",n:0}}
+function hkBtns(){const pend=ui.hkPend&&Date.now()-ui.hkPend<600000;return pend?`<button class="pri pulse" data-a="hkimp">✓ Tap to finish sync</button>`:`<span class="chips" style="margin:0"><button class="pri" data-a="hkrun">▶ Run &amp; Sync</button><button data-a="hkimp" aria-label="Import from clipboard">↻</button></span>`}
 function vWatch(){const d=ui.date,h=hkD(d),R=recovery(d),has=Object.keys(h).length>1;
-  if(!has)return`<section class="card watch"><div class="exh"><h2 style="margin:0">⌚ Apple Watch</h2><button class="pri" data-a="hkimp">Import</button></div><p class="mut sm">Run your Health Shortcut, then tap Import to pull in steps, calories burned, resting HR and HRV. Set it up in Settings → Apple Health.</p></section>`;
+  if(!has)return`<section class="card watch"><div class="exh"><h2 style="margin:0">⌚ Apple Watch</h2>${hkBtns()}</div><p class="mut sm">Run your Health Shortcut, then tap Import to pull in steps, calories burned, resting HR and HRV. Set it up in Settings → Apple Health.</p></section>`;
   const T=(ic,v,l)=>v==null?"":`<div class="wt"><span>${ic}</span><b>${v}</b><span class="mut sm">${l}</span></div>`;
-  return `<section class="card watch"><div class="exh"><h2 style="margin:0">⌚ Apple Watch</h2><button data-a="hkimp">↻ Sync</button></div>
+  return `<section class="card watch"><div class="exh"><h2 style="margin:0">⌚ Apple Watch</h2>${hkBtns()}</div>
   ${R?`<div class="rec" style="--c:${R.lv[1]}"><div class="rsc"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="34" fill="none" stroke="var(--soft)" stroke-width="9"/><circle class="arc" cx="42" cy="42" r="34" fill="none" stroke="${R.lv[1]}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(213.6*R.sc/100).toFixed(1)} 213.6" transform="rotate(-90 42 42)"/><text x="42" y="49" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">${R.sc}</text></svg></div><div><div class="mut sm">Recovery</div><b class="big2" style="color:${R.lv[1]}">${R.lv[0]}</b><p class="sm">${R.lv[2]}</p><p class="mut sm">${R.why.join(" · ")}${R.base?"":" · baseline builds after 3 days of syncs"}</p></div></div>`:""}
   <div class="wts">${T("👟",h.steps!=null?fmt(h.steps):null,"steps")}${T("🔥",h.active!=null?fmt(h.active):null,"active kcal")}${T("⚡",h.active!=null&&h.basal!=null?fmt(h.active+h.basal):null,"total burn")}${T("⏱",h.exmin,"exercise min")}${T("❤️",h.rhr,"resting bpm")}${T("📈",h.hrv!=null?fmt(h.hrv):null,"HRV ms")}</div>
   <p class="mut sm">Synced ${h.t?new Date(h.t).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):""}. Sync again later for updated numbers.</p></section>`}
@@ -336,7 +338,7 @@ function vHealthSet(){const S=state.settings;return `<details class="card" data-
    <li>Run it once and tap <b>Allow</b> for Health. Then come here and tap <b>Import</b>.</li></ol>
   <p class="mut sm">Extras later, same pattern: <b>exmin:</b> Exercise Minutes · <b>hrv:</b> Heart Rate Variability · <b>weight:</b> Weight. Sleep isn't synced: log your hours under Habits each morning and the coach uses them.</p>
   <p class="sm">Then in this app tap <b>Import</b> on Today (iPhone shows a small "Paste" bubble; tap it). Missing lines are fine; it uses whatever is there.</p>
-  <div class="chips"><button class="pri" data-a="hkimp">Import from clipboard</button></div>
+  <label class="f">Your Shortcut's exact name<input data-ss="scName" value="${esc(S.scName||"Sync Tracker")}" placeholder="Sync Tracker"></label><p class="mut sm">The ▶ Run &amp; Sync button opens this Shortcut, then brings you back. Tap "✓ Tap to finish sync" when you return.</p><div class="chips"><button class="pri" data-a="hkrun">▶ Run &amp; Sync</button><button data-a="hkimp">Import from clipboard</button></div>
   <label class="f" style="margin-top:10px">Or paste it here<textarea id="hkpaste" rows="4" placeholder="TRK&#10;steps: 8432&#10;sleep: 7.2 …"></textarea></label><button data-a="hkpaste">Import pasted text</button>
   <div class="two" style="margin-top:12px"><label class="f">Calories burned from<select data-ss="burn"><option value="watch" ${S.burn!=="est"?"selected":""}>Apple Watch (after 3 days)</option><option value="est" ${S.burn==="est"?"selected":""}>Formula estimate</option></select></label><label class="f">Watch calorie correction<select data-s="wf">${[[1,"None (100%)"],[0.95,"95%"],[0.9,"90% (recommended)"],[0.85,"85%"],[0.8,"80%"]].map(o=>`<option value="${o[0]}" ${String(S.wf??0.9)===String(o[0])?"selected":""}>${o[1]}</option>`).join("")}</select></label></div>
   <p class="mut sm">Watches tend to overestimate calories burned, so the forecast trims them by default. Right now it's using: <b>${burnTD(S).src}</b> → ${fmt(burnTD(S).v)} kcal/day.</p></details>`}
@@ -995,7 +997,8 @@ document.addEventListener("click",e=>{
   else if(a==="rmset"){const W=curW(),ex=W&&W.ex.find(x=>norm(x.n)===norm(b.dataset.n));if(ex){ex.sets.splice(+b.dataset.j,1);commit()}}
   else if(a==="addex"){const n=document.getElementById("newex").value.trim();if(!n)return;const W=ensureW();if(!W.ex.some(x=>norm(x.n)===norm(n)))W.ex.push({n,sets:[]});commit()}
   else if(a==="goslp"){const h=document.querySelector(".habs");if(h)h.scrollIntoView({behavior:"smooth",block:"center"})}
-  else if(a==="hkimp"){importHK()}
+  else if(a==="hkrun"){ui.hkPend=Date.now();saveUI();const n=(state.settings.scName||"Sync Tracker").trim();location.href="shortcuts://run-shortcut?name="+encodeURIComponent(n)}
+  else if(a==="hkimp"){ui.hkPend=0;saveUI();importHK()}
   else if(a==="hkpaste"){const t=document.getElementById("hkpaste");const o=parseHK(t?t.value:"");if(o){applyHK(o)}else toast("That doesn't look like Health data. It should start with TRK.","warn")}
   else if(a==="addon"){openAO(b.dataset.id)}
   else if(a==="aopick"){ui.ao.sel=b.dataset.id||null;if(ui.ao.sel){const x=ingOf(ui.ao.sel);ui.ao.u=x&&/oil|butter|ghee/i.test(x.n)?"tsp":"tbsp";ui.ao.amt=1}aoRefresh()}
@@ -1073,6 +1076,7 @@ document.addEventListener("submit",e=>{e.preventDefault();const f=e.target,v=n=>
 });
 document.addEventListener("toggle",e=>{const d=e.target;if(d.dataset&&d.dataset.d){ui.op[d.dataset.d]=d.open;saveUI()}},true);
 window.addEventListener("scroll",()=>{if(document.querySelector(".tipg")){clearTimeout(tipT);tipT=setTimeout(clearTips,400)}},{passive:true});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&ui.hkPend&&Date.now()-ui.hkPend<600000){render();const b=document.querySelector(".watch");if(b&&ui.tab==="today")b.scrollIntoView({behavior:"smooth",block:"center"});toast("Shortcut done? Tap ✓ to finish syncing","good")}});
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS[h]&&h!==ui.tab){ui.tab=h;ui.msg="";ui.enter=1;render();window.scrollTo(0,0)}});
 try{if(!state.achInit)checkAch()}catch(e){}
 ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.restEnd=0;
