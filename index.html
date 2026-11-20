@@ -173,6 +173,11 @@ main.enter .mz{animation:fade .6s both}
 #aoq{margin:4px 0 6px}.aol{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.aoi{display:grid;text-align:left;white-space:normal;gap:2px;min-height:58px;padding:8px 12px;animation:up .3s both}
 .aosel{display:grid;gap:10px;animation:up .3s both}.aoamt{display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:center}.aoamt>button{height:48px;font-size:22px;padding:0;border-radius:50%}.aoamt input{text-align:center;font:700 26px "Barlow Condensed",sans-serif}.aou{grid-column:1/-1}.aou button{flex:1}
 .aoh{display:grid;gap:2px;background:var(--soft);border-radius:12px;padding:8px 12px;margin-bottom:6px}
+.watch{background:linear-gradient(135deg,color-mix(in srgb,#f97316 12%,var(--card)),var(--card))}
+.rec{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center;margin:12px 0;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--c) 10%,var(--soft))}.rsc svg{width:96px;height:96px;display:block}.rec p{margin:4px 0 0}
+.wts{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:10px}.wt{display:grid;gap:1px;background:var(--soft);border-radius:12px;padding:9px 10px}.wt b{font:700 24px "Barlow Condensed",sans-serif}
+main.enter .wt{animation:pop .4s both}
+.guide{padding-left:20px;display:grid;gap:8px;font-size:15px;line-height:1.45}.tpl{background:var(--soft);border-radius:10px;padding:10px 12px;font-size:13px;white-space:pre-wrap;margin:8px 0;user-select:all}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(max-width:600px){.hero{grid-template-columns:1fr}.big{font-size:36px}h1{font-size:26px}.setin{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}.setin button{grid-column:1/-1}.f5{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:no-preference){.arc{transition:stroke-dasharray .6s ease}}
@@ -283,6 +288,61 @@ function vBuilder(){
 function mbEntry(){const t=mbTot();if(!t.g)return null;const ing=mbRows().filter(r=>ingOf(r.id)&&parseFloat(r.g)).map(r=>[ingOf(r.id).n,parseFloat(r.g)]);return{n:(ui.mb.name||"").trim()||mbName(),k:r1(t.k),p:r1(t.p),c:r1(t.c),f:r1(t.f),ing,g:t.g}}
 const habD=()=>{state.hab=state.hab||{};return state.hab[ui.date]||{}};
 function setHab(k,v){state.hab=state.hab||{};const h=state.hab[ui.date]=state.hab[ui.date]||{};h[k]=Math.max(0,v);commit()}
+const HKF=[["steps","Steps"],["active","Active energy (kcal)"],["basal","Resting energy (kcal)"],["exmin","Exercise minutes"],["sleep","Sleep (hours)"],["rhr","Resting heart rate"],["hrv","Heart rate variability (ms)"],["weight","Weight (kg)"]];
+function numOf(v){v=String(v||"").replace(/,(?=\d{3}\b)/g,"").replace(",",".");const m=v.match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null}
+function parseHK(txt){if(!/TRK/i.test(txt||""))return null;const o={};for(const line of txt.split(/[\n;|]+/)){const m=line.match(/^\s*([a-z]+)\s*[:=]\s*(.+)$/i);if(!m)continue;const k=m[1].toLowerCase(),v=m[2].trim();if(k==="date"){const d=v.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(d)o.date=`${d[1]}-${z(+d[2])}-${z(+d[3])}`;continue}if(HKF.some(f=>f[0]===k)){const n=numOf(v);if(n!=null&&!isNaN(n))o[k]=n}}
+  if(o.sleep!=null){if(o.sleep>1440)o.sleep/=3600;else if(o.sleep>24)o.sleep/=60;o.sleep=Math.round(o.sleep*4)/4}
+  if(o.hrv!=null&&o.hrv<1)o.hrv*=1000;for(const k of["steps","active","basal","exmin"])if(o[k]!=null)o[k]=Math.round(o[k]);return Object.keys(o).filter(k=>k!=="date").length?o:null}
+function applyHK(o){const d=o.date||ymd(new Date());state.hk=state.hk||{};state.hk[d]={...(state.hk[d]||{}),...o,t:Date.now()};delete state.hk[d].date;
+  state.hab=state.hab||{};const h=state.hab[d]=state.hab[d]||{};if(o.steps!=null)h.st=o.steps;if(o.sleep!=null)h.s=o.sleep;
+  if(o.weight!=null&&o.weight>30){const e=state.body.find(x=>x.d===d);if(e){if(e.w==null)e.w=r1(o.weight)}else state.body.push({d,w:r1(o.weight)})}
+  commit();const bits=[o.steps!=null&&fmt(o.steps)+" steps",o.active!=null&&fmt(o.active)+" active kcal",o.sleep!=null&&o.sleep+" h sleep",o.rhr!=null&&o.rhr+" bpm",o.hrv!=null&&fmt(o.hrv)+" ms HRV"].filter(Boolean);
+  confetti();toast(`⌚ Synced from Apple Health${bits.length?": "+bits.slice(0,3).join(" · "):""}`,"good")}
+async function importHK(){try{const t=await navigator.clipboard.readText();const o=parseHK(t);if(o){applyHK(o);return}toast("Clipboard doesn't have Health data. Run the Shortcut first, or paste it in Settings → Apple Health.","warn")}catch(e){ui.op["Apple Health"]=true;location.hash="targets";toast("Couldn't read the clipboard. Paste it in the box here instead.","warn")}}
+const hkD=d=>(state.hk||{})[d]||{};
+function hkBase(k,d,n){const out=[];const t=pd(d);for(let i=1;i<=n;i++){const x=new Date(t);x.setDate(x.getDate()-i);const v=hkD(ymd(x))[k];if(v!=null)out.push(v)}return out.length>=3?out.reduce((a,b)=>a+b,0)/out.length:null}
+function recovery(d){const h=hkD(d),S=state.settings;if(h.rhr==null&&h.hrv==null&&h.sleep==null)return null;let sc=60,why=[];
+  const bh=hkBase("hrv",d,14),br=hkBase("rhr",d,14);
+  if(h.hrv!=null&&bh){const z=(h.hrv-bh)/bh;sc+=Math.max(-25,Math.min(20,z*120));why.push(`HRV ${fmt(h.hrv)} ms (usual ${fmt(bh)})`)}else if(h.hrv!=null)why.push(`HRV ${fmt(h.hrv)} ms`);
+  if(h.rhr!=null&&br){const z=(br-h.rhr)/br;sc+=Math.max(-25,Math.min(15,z*250));why.push(`resting HR ${fmt(h.rhr)} (usual ${fmt(br)})`)}else if(h.rhr!=null)why.push(`resting HR ${fmt(h.rhr)}`);
+  if(h.sleep!=null){sc+=(Math.min(1.1,h.sleep/S.sleep)-0.85)*60;why.push(`${h.sleep} h sleep`)}
+  sc=Math.round(Math.max(5,Math.min(100,sc)));const lv=sc>=75?["Ready to push","var(--grn)","Go for rep and weight increases today."]:sc>=55?["Normal","var(--yel)","Train as planned."]:["Take it easier","var(--red)","Keep the weights, skip extra sets, focus on form and sleep tonight."];
+  return{sc,lv,why,base:!!(bh||br)}}
+function burnTD(S){const td=new Date();td.setHours(0,0,0,0);const v=[];for(let i=1;i<=14;i++){const x=new Date(td);x.setDate(x.getDate()-i);const h=hkD(ymd(x));if(h.active!=null&&h.basal!=null&&h.basal>800)v.push(h.active+h.basal)}
+  if(S.burn!=="est"&&v.length>=3){const raw=v.reduce((a,b)=>a+b,0)/v.length;return{v:raw*(S.wf||0.9),src:`Apple Watch, ${v.length}-day average`,n:v.length}}return{v:tdeeOf(S),src:"estimate",n:0}}
+function vWatch(){const d=ui.date,h=hkD(d),R=recovery(d),has=Object.keys(h).length>1;
+  if(!has)return`<section class="card watch"><div class="exh"><h2 style="margin:0">⌚ Apple Watch</h2><button class="pri" data-a="hkimp">Import</button></div><p class="mut sm">Run your Health Shortcut, then tap Import to pull in steps, sleep, calories burned, resting HR and HRV. Set it up in Settings → Apple Health.</p></section>`;
+  const T=(ic,v,l)=>v==null?"":`<div class="wt"><span>${ic}</span><b>${v}</b><span class="mut sm">${l}</span></div>`;
+  return `<section class="card watch"><div class="exh"><h2 style="margin:0">⌚ Apple Watch</h2><button data-a="hkimp">↻ Sync</button></div>
+  ${R?`<div class="rec" style="--c:${R.lv[1]}"><div class="rsc"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="34" fill="none" stroke="var(--soft)" stroke-width="9"/><circle class="arc" cx="42" cy="42" r="34" fill="none" stroke="${R.lv[1]}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(213.6*R.sc/100).toFixed(1)} 213.6" transform="rotate(-90 42 42)"/><text x="42" y="49" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">${R.sc}</text></svg></div><div><div class="mut sm">Recovery</div><b class="big2" style="color:${R.lv[1]}">${R.lv[0]}</b><p class="sm">${R.lv[2]}</p><p class="mut sm">${R.why.join(" · ")}${R.base?"":" · baseline builds after 3 days of syncs"}</p></div></div>`:""}
+  <div class="wts">${T("👟",h.steps!=null?fmt(h.steps):null,"steps")}${T("🔥",h.active!=null?fmt(h.active):null,"active kcal")}${T("⚡",h.active!=null&&h.basal!=null?fmt(h.active+h.basal):null,"total burn")}${T("⏱",h.exmin,"exercise min")}${T("😴",h.sleep,"h sleep")}${T("❤️",h.rhr,"resting bpm")}${T("📈",h.hrv!=null?fmt(h.hrv):null,"HRV ms")}</div>
+  <p class="mut sm">Synced ${h.t?new Date(h.t).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):""}. Sync again later for updated numbers.</p></section>`}
+function vHealthSet(){const S=state.settings;return `<details class="card" data-d="Apple Health" ${ui.op["Apple Health"]?"open":""}><summary><h2>⌚ Apple Health</h2></summary>
+  <p class="sm">Web apps can't read Apple Health directly, so an Apple Shortcut copies today's numbers and the app imports them. Build the Shortcut once (about 5 minutes):</p>
+  <ol class="guide">
+   <li>Open <b>Shortcuts</b> → <b>+</b> → name it <b>Sync Tracker</b>.</li>
+   <li>Add <b>Find Health Samples</b>: Type <b>Steps</b>, Start Date <b>is today</b>. Then <b>Calculate Statistics</b> → <b>Sum</b>. Rename the result <b>Steps</b> (long-press → Rename).</li>
+   <li>Repeat step 2 for <b>Active Energy</b>, <b>Resting Energy</b> and <b>Exercise Minutes</b> (all Sum, all today).</li>
+   <li><b>Find Health Samples</b>: Type <b>Resting Heart Rate</b>, Start Date <b>is in the last 1 day</b>, Sort by Start Date <b>Latest First</b>, Limit <b>1</b>. Do the same for <b>Weight</b> (last 7 days).</li>
+   <li><b>Find Health Samples</b>: Type <b>Heart Rate Variability</b>, last 1 day → <b>Calculate Statistics</b> → <b>Average</b>.</li>
+   <li><b>Find Health Samples</b>: Type <b>Sleep Analysis</b>, Start Date <b>is in the last 1 day</b>, Value <b>is Asleep</b> (pick Core, Deep and REM if it asks). Then <b>Get Details of Health Samples</b> → <b>Duration</b>, then <b>Calculate Statistics</b> → <b>Sum</b>.</li>
+   <li>Add a <b>Text</b> action and type exactly this, tapping each variable in where it says:<pre class="tpl">TRK
+date: [Current Date, format 2026-11-20]
+steps: [Steps]
+active: [Active Energy]
+basal: [Resting Energy]
+exmin: [Exercise Minutes]
+sleep: [Sleep]
+rhr: [Resting Heart Rate]
+hrv: [HRV]
+weight: [Weight]</pre>For the date: tap Current Date → Date Format <b>Custom</b> → <b>yyyy-MM-dd</b>.</li>
+   <li>Add <b>Copy to Clipboard</b>. Done. Run it once and tap <b>Allow</b> on the Health permission.</li>
+   <li>Optional: Automation → <b>Time of Day</b> 10 PM → Run Sync Tracker → <b>Run Immediately</b>. Or add it to your Home Screen next to this app.</li></ol>
+  <p class="sm">Then in this app tap <b>Import</b> on Today (iPhone shows a small "Paste" bubble; tap it). Missing lines are fine; it uses whatever is there.</p>
+  <div class="chips"><button class="pri" data-a="hkimp">Import from clipboard</button></div>
+  <label class="f" style="margin-top:10px">Or paste it here<textarea id="hkpaste" rows="4" placeholder="TRK&#10;steps: 8432&#10;sleep: 7.2 …"></textarea></label><button data-a="hkpaste">Import pasted text</button>
+  <div class="two" style="margin-top:12px"><label class="f">Calories burned from<select data-ss="burn"><option value="watch" ${S.burn!=="est"?"selected":""}>Apple Watch (after 3 days)</option><option value="est" ${S.burn==="est"?"selected":""}>Formula estimate</option></select></label><label class="f">Watch calorie correction<select data-s="wf">${[[1,"None (100%)"],[0.95,"95%"],[0.9,"90% (recommended)"],[0.85,"85%"],[0.8,"80%"]].map(o=>`<option value="${o[0]}" ${String(S.wf??0.9)===String(o[0])?"selected":""}>${o[1]}</option>`).join("")}</select></label></div>
+  <p class="mut sm">Watches tend to overestimate calories burned, so the forecast trims them by default. Right now it's using: <b>${burnTD(S).src}</b> → ${fmt(burnTD(S).v)} kcal/day.</p></details>`}
 function vHabits(){const S=state.settings,h=habD(),w=(h.w||0)*0.25;
   const tile=(ic,lab,val,goal,unit,pct,ctrl)=>`<div class="hab ${pct>=1?"done":""}"><div class="hh"><span class="bi">${ic}</span><span class="grow"><b>${lab}</b><span class="mut sm">${val} / ${goal} ${unit}</span></span>${pct>=1?"<span class=ok>✓</span>":""}</div><div class="bar"><i style="width:${Math.min(100,pct*100)}%"></i></div>${ctrl}</div>`;
   return `<section class="card"><h2>Habits</h2><div class="habs">
@@ -313,7 +373,7 @@ function questCard(){const Q=questsFor(ui.date),c=Q.filter(x=>x.done).length;
 function coachCard(){
   const S=state.settings,now=new Date(),hr=now.getHours(),isT=ui.date===ymd(now),L=state.logs[ui.date]||[],t=tot(L),kl=S.kMax-t.k,pl=S.protein-t.p;
   const g=hr<5?"Up late":hr<12?"Good morning":hr<17?"Good afternoon":"Good evening",key=wkKey(pd(ui.date).getDay()),P=state.plan[key],W=curW(),trained=W&&W.ex.some(e=>e.sets.length);
-  const lines=[];
+  const lines=[];const RC=recovery(ui.date);if(RC)lines.push(`<span style="color:${RC.lv[1]}">●</span> Recovery <b>${RC.sc}</b>: ${RC.lv[0]}. ${RC.lv[2]}`);
   if(P)lines.push(trained?`✅ ${esc(P.name)} done${isT?" today":""}. Eat your protein so it turns into muscle.`:`🏋️ ${isT?"Today":"This day"} is <b>${esc(P.name)}</b>. <button class="lnk" data-a="go" data-k="gym">Open workout →</button>`);else lines.push("🛌 Rest day. Recovery is when muscle actually grows.");
   if(pl>0&&kl>0){const fit=state.foods.filter(f=>f.k>0&&f.k<=kl+60&&f.p>=8).map(f=>({f,s:Math.min(f.p,pl)/f.k})).sort((a,b)=>b.s-a.s).slice(0,3);
     lines.push(`🎯 ${fmt(kl)} kcal and <b>${fmt(pl)} g protein</b> left.${fit.length?" Best fits:":""}`+(fit.length?`<div class="sug">${fit.map(({f})=>`<button data-a="add" data-id="${f.id}"><b>${esc(f.n)}</b><span>${fmt(f.k)} kcal · ${r1(f.p)} g P</span></button>`).join("")}</div>`:""))}
@@ -348,6 +408,7 @@ function vToday(){
     ${L.length?L.map((e,i)=>`<div class="row ${ui.newE===e.id?"newr":""}"><div class="grow"><b>${esc(e.n)}</b>${e.q!==1?` <span class="tag">×${e.q}</span>`:""}<div class="mut sm">${r1(e.p*e.q)} P · ${r1(e.c*e.q)} C · ${r1(e.f*e.q)} F${e.ing?`<br>${e.ing.map(x=>esc(x[0].replace(/\s*\(.*?\)/g,""))+" "+x[1]+" g").join(" · ")}`:""}${e.add&&e.add.length?`<br><span class="aotag">+ ${e.add.map(a=>esc(a.n.replace(/\s*\(.*?\)/g,""))+" "+a.amt+" "+a.u).join(", ")}</span>`:""}</div><button class="aobtn" data-a="addon" data-id="${e.id}" aria-label="Add sauce or extra to ${esc(e.n)}">+ Add-on</button></div><span class="r num" style="font-size:20px">${fmt(e.k*e.q)}</span><button class="ghost" data-a="del" data-i="${i}" aria-label="Remove ${esc(e.n)}">✕</button></div>`).join(""):`<p class="mut">Nothing logged yet. Search above and tap Add.</p>`}
     ${L.length?`<div class="row"><b class="grow">Total</b><span class="r">${fmt(t.k)} kcal · ${r1(t.p)} P · ${fmt(t.c)} C · ${fmt(t.f)} F</span></div>`:""}
   </section></div>
+  ${vWatch()}
   ${vHabits()}`;
 }
 const curW=()=>state.workouts.find(w=>w.d===ui.date);
@@ -451,7 +512,7 @@ function vGym(){
   </section>
   <section class="card"><h2>History</h2>${hist.length?hist.map(w=>`<details><summary>${nice(w.d)} · ${esc((state.plan[w.s]||{name:w.s==="custom"?"Custom":w.s}).name)}</summary>${w.ex.map(e=>`<div class="row"><span class="grow">${esc(e.n)}</span><span class="r mut sm">${e.sets.length?setsTxt(e.sets):esc(e.note||"")}</span></div>`).join("")}</details>`).join(""):`<p class="mut">Past sessions show up here.</p>`}</section>`;
 }
-const SUBS={overview:"Overview",lifts:"Strength",awards:"Awards",training:"Training",forecast:"Forecast",body:"Body",shape:"Shape",food:"Food",habits:"Habits"};
+const SUBS={overview:"Overview",lifts:"Strength",awards:"Awards",training:"Training",forecast:"Forecast",body:"Body",shape:"Shape",food:"Food",habits:"Health"};
 function vProgress(){
   const s=SUBS[ui.sub]?ui.sub:(SUBS[state.settings.psub]?state.settings.psub:"overview");
   const seg=`<div class="seg" role="tablist">${Object.entries(SUBS).map(([k,v])=>`<button data-a="sub" data-k="${k}" class="${k===s?"on":""}" role="tab" aria-selected="${k===s}">${v}</button>`).join("")}</div>`;
@@ -508,6 +569,7 @@ function vCustom(){
   ${sel("incD","Dumbbell jump",[[1,"1 kg"],[2,"2 kg"],[2.5,"2.5 kg"],[5,"5 kg"]])}${sel("incM","Cable / machine jump",[[1.25,"1.25 kg"],[2.5,"2.5 kg"],[5,"5 kg"]])}
   ${sel("incB","Barbell / other jump",[[1.25,"1.25 kg"],[2.5,"2.5 kg"],[5,"5 kg"]])}${sel("rest","Rest timer",[[0,"Off"],[60,"1:00"],[90,"1:30"],[120,"2:00"],[150,"2:30"],[180,"3:00"]])}</div>
   <p class="mut sm">The coach uses double progression: add reps until every set hits the top of the range, then add weight. The rep range per exercise comes from your plan (e.g. "3×8–12").</p></details>
+  ${vHealthSet()}
   <details class="card" data-d="Habits" ${ui.op["Habits"]?"open":""}><summary><h2>Habits</h2></summary><div class="two">${sel("water","Water goal",[[2,"2 L"],[2.5,"2.5 L"],[3,"3 L"],[3.5,"3.5 L"],[4,"4 L"]])}${sel("sleep","Sleep goal",[[6.5,"6.5 h"],[7,"7 h"],[7.5,"7.5 h"],[8,"8 h"],[9,"9 h"]])}${sel("steps","Step goal",[[5000,"5,000"],[7000,"7,000"],[8000,"8,000"],[10000,"10,000"],[12000,"12,000"]])}</div></details>
   <details class="card" data-d="App" ${ui.op["App"]?"open":""}><summary><h2>App</h2></summary><div class="two">${sel("anim","Animations",[[1,"On"],[0,"Off"]])}${sel("fx","Record celebrations",[[1,"Confetti on"],[0,"Off"]])}${sel("psub","Progress opens on",Object.entries(SUBS),1)}</div></details>
   <details class="card" data-d="Customize" ${ui.op["Customize"]?"open":""}><summary><h2>Customize</h2></summary><label class="f">App name<input data-ss="name" value="${esc(S.name)}"></label>
@@ -534,7 +596,7 @@ const bfmOf=e=>e.bfm!=null?e.bfm:(e.w&&e.pbf!=null?r1(e.w*e.pbf/100):null);
 function sessIn(days){const cut=ymd(new Date(Date.now()-days*DAY));return state.workouts.filter(w=>w.d>=cut&&w.ex.some(e=>e.sets.length)).length}
 function forecast(){
   const B=[...state.body].filter(e=>e.w).sort((a,b)=>a.d.localeCompare(b.d)),L=[...B].reverse().find(e=>e.pbf!=null||e.bfm!=null)||B[B.length-1];if(!L)return null;
-  const S=state.settings,td=tdeeOf(S),ai=avgIntake(),mid=(S.kMin+S.kMax)/2,useLog=S.fIn!=="target"&&ai.n>0,kIn=useLog?ai.k:mid,def=td-kIn;
+  const S=state.settings,BT=burnTD(S),td=BT.v,ai=avgIntake(),mid=(S.kMin+S.kMax)/2,useLog=S.fIn!=="target"&&ai.n>0,kIn=useLog?ai.k:mid,def=td-kIn;
   const act=sessIn(14)/2,spw=S.basis==="actual"?act:S.planDays,pAvg=useLog?ai.p:S.protein,pf=Math.min(1,pAvg/S.protein),tf=Math.min(1,spw/3);
   let rate=spw<1?-0.04:S.mg*tf*(0.4+0.6*pf);if(def<0&&rate>0)rate*=1.25;
   const pb=L.pbf!=null?L.pbf:bfmOf(L)/L.w*100,bf0=L.w*pb/100,sm0=L.smm,t0=pd(L.d).getTime(),H=S.fH;
@@ -551,7 +613,7 @@ function forecast(){
   FC.fp={col:"var(--yel)",unit:"%",goal:S.gBf||null,past:past.filter(e=>e.pbf!=null).map(e=>[T(e),e.pbf]),fut:pts.map(o=>[o.t,r1(o.p)])};
   FC.ff={col:"var(--yel)",unit:"kg",past:past.filter(e=>bfmOf(e)!=null).map(e=>[T(e),bfmOf(e)]),fut:pts.map(o=>[o.t,r1(o.fat)])};
   if(sm0!=null)FC.fs={col:"var(--red)",unit:"kg",goal:S.gSmm||null,past:past.filter(e=>e.smm!=null).map(e=>[T(e),e.smm]),fut:pts.map(o=>[o.t,r1(o.sm)])};
-  return{L,td,ai,kIn,useLog,def,rate,spw,act,pAvg,pf,pts,eta,bf0,sm0,pb,H}
+  return{L,td,BT,ai,kIn,useLog,def,rate,spw,act,pAvg,pf,pts,eta,bf0,sm0,pb,H}
 }
 function vForecast(){
   const F=forecast();if(!F)return`<section class="card"><h2>Recomp forecast</h2><p class="mut sm">Add a weigh-in or InBody scan below to see your forecast.</p></section>`;
@@ -559,7 +621,7 @@ function vForecast(){
   const dFat=r1(E.fat-F.bf0),dSm=F.sm0!=null?r1(E.sm-F.sm0):null,dW=r1(E.w-F.L.w),sg=v=>(v>0?"+":v<0?"−":"")+Math.abs(v);
   const cur={bf:F.pb,sm:F.sm0,w:F.L.w,waist:latest("waist")};
   const goal=(lab,c,g,e,unit,down)=>{if(!g||c==null)return"";const done=down?c<=g:c>=g;return`<div class="stat goal"><div class="mut sm">${lab} goal</div><div class="num">${r1(c)} → ${g}<span style="font-size:16px"> ${unit}</span></div><div class="sm ${done?"ok":""}">${done?"Reached ✓":e?`about ${dt(e.t)} · week ${e.i}`:"not within 3 years at this pace"}</div></div>`};
-  const why=[`Eating ${fmt(F.kIn)} kcal (${F.useLog?`your average over the last ${F.ai.n} logged day${F.ai.n>1?"s":""}`:"your target"}) against a burn of about ${fmt(F.td)}: a ${F.def>=0?fmt(F.def)+" kcal deficit":fmt(-F.def)+" kcal surplus"} a day.`,
+  const why=[`Eating ${fmt(F.kIn)} kcal (${F.useLog?`your average over the last ${F.ai.n} logged day${F.ai.n>1?"s":""}`:"your target"}) against a burn of about ${fmt(F.td)} (${F.BT?F.BT.src:"estimate"}): a ${F.def>=0?fmt(F.def)+" kcal deficit":fmt(-F.def)+" kcal surplus"} a day.`,
     F.spw<1?`Training under once a week, so muscle is expected to drop slowly.`:`Training ${r1(F.spw)}×/week (${S.basis==="actual"?"what you actually did in the last 2 weeks":"your plan"}; you actually did ${r1(F.act)}/week) with protein at ${fmt(F.pAvg)} g, about ${F.rate>0?r1(F.rate*4.3):0} kg of muscle a month to start, slowing over time.`];
   return `<section class="card"><h2>Recomp forecast</h2>
   <p class="big" style="font-size:32px">In ${F.H} weeks: ${sg(dFat)} kg fat${dSm!=null?` · ${sg(dSm)} kg muscle`:""}</p>
@@ -731,7 +793,9 @@ function vHabitsP(){const S=state.settings,td=new Date();td.setHours(0,0,0,0);co
   G.hsl={unit:"h",line:S.sleep,vals:days.map(d=>[lab(d),H(d).s||null,(H(d).s||0)>=S.sleep?"#8b5cf6":"#a99bd0"])};
   G.hst={unit:"steps",line:S.steps,vals:days.map(d=>[lab(d),H(d).st||null,(H(d).st||0)>=S.steps?"var(--grn)":"#7fb894"])};
   const c=(k,t)=>`<section class="card"><h2>${t}</h2><div class="fig short"><svg data-g="${k}" role="img" aria-label="${t}"></svg></div></section>`;
-  return c("hw","Water (L)")+c("hsl","Sleep (hours)")+c("hst","Steps")+`<p class="mut sm" style="text-align:center">Change your goals in Settings → Habits.</p>`}
+  const K=d=>hkD(d);G.hka={unit:"kcal",vals:days.map(d=>[lab(d),K(d).active??null,"#f97316"])};G.hkr={unit:"bpm",vals:days.map(d=>[lab(d),K(d).rhr??null,"var(--red)"])};G.hkv={unit:"ms",vals:days.map(d=>[lab(d),K(d).hrv??null,"#8b5cf6"])};G.hkb={unit:"kcal",line:(S.kMin+S.kMax)/2,vals:days.map(d=>{const h=K(d);return[lab(d),h.active!=null&&h.basal!=null?Math.round(h.active+h.basal):null,"#f59e0b"]})};
+  const hasHK=days.some(d=>Object.keys(K(d)).length>1);
+  return (hasHK?c("hkb","Total burned vs. eating target (kcal)")+c("hka","Active calories")+c("hkr","Resting heart rate")+c("hkv","HRV (ms)"):`<section class="card"><h2>⌚ Apple Watch</h2><p class="mut sm">Sync from Apple Health (Settings → Apple Health) to see calories burned, resting heart rate and HRV here.</p></section>`)+c("hw","Water (L)")+c("hsl","Sleep (hours)")+c("hst","Steps")+`<p class="mut sm" style="text-align:center">Change your goals in Settings → Habits.</p>`}
 const LV=[["Needs work","var(--red)"],["Getting there","#e07a2e"],["Good","var(--yel)"],["Great","var(--grn)"],["Elite","#8b5cf6"]];
 const STD=[
  [/bench|chest press|machine press|flat.*press/,"Bench / chest press",[.5,.75,1.1,1.5,1.9],"bw"],
@@ -929,6 +993,8 @@ document.addEventListener("click",e=>{
   else if(a==="set"){const i=b.dataset.i,w=parseFloat(document.getElementById("w"+i).value)||0,r=parseInt(document.getElementById("r"+i).value,10);if(!r){document.getElementById("r"+i).focus();return}logSet(b.dataset.n,w,r,b.dataset.tg);commit();startRest()}
   else if(a==="rmset"){const W=curW(),ex=W&&W.ex.find(x=>norm(x.n)===norm(b.dataset.n));if(ex){ex.sets.splice(+b.dataset.j,1);commit()}}
   else if(a==="addex"){const n=document.getElementById("newex").value.trim();if(!n)return;const W=ensureW();if(!W.ex.some(x=>norm(x.n)===norm(n)))W.ex.push({n,sets:[]});commit()}
+  else if(a==="hkimp"){importHK()}
+  else if(a==="hkpaste"){const t=document.getElementById("hkpaste");const o=parseHK(t?t.value:"");if(o){applyHK(o)}else toast("That doesn't look like Health data. It should start with TRK.","warn")}
   else if(a==="addon"){openAO(b.dataset.id)}
   else if(a==="aopick"){ui.ao.sel=b.dataset.id||null;if(ui.ao.sel){const x=ingOf(ui.ao.sel);ui.ao.u=x&&/oil|butter|ghee/i.test(x.n)?"tsp":"tbsp";ui.ao.amt=1}aoRefresh()}
   else if(a==="aounit"){const x=ingOf(ui.ao.sel);ui.ao.u=b.dataset.k;ui.ao.amt=ui.ao.u==="g"?Math.round(x.tb||15):1;aoRefresh()}
