@@ -290,9 +290,13 @@ const habD=()=>{state.hab=state.hab||{};return state.hab[ui.date]||{}};
 function setHab(k,v){state.hab=state.hab||{};const h=state.hab[ui.date]=state.hab[ui.date]||{};h[k]=Math.max(0,v);commit()}
 const HKF=[["steps","Steps"],["active","Active energy (kcal)"],["basal","Resting energy (kcal)"],["exmin","Exercise minutes"],["sleep","Sleep (hours)"],["rhr","Resting heart rate"],["hrv","Heart rate variability (ms)"],["weight","Weight (kg)"]];
 function numOf(v){v=String(v||"").replace(/,(?=\d{3}\b)/g,"").replace(",",".");const m=v.match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null}
-function parseHK(txt){if(!/TRK/i.test(txt||""))return null;const o={};for(const line of txt.split(/[\n;|]+/)){const m=line.match(/^\s*([a-z]+)\s*[:=]\s*(.+)$/i);if(!m)continue;const k=m[1].toLowerCase(),v=m[2].trim();if(k==="date"){const d=v.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(d)o.date=`${d[1]}-${z(+d[2])}-${z(+d[3])}`;continue}if(HKF.some(f=>f[0]===k)){const n=numOf(v);if(n!=null&&!isNaN(n))o[k]=n}}
+function parseHK(txt){if(!/TRK/i.test(txt||""))return null;const o={},V={};let cur=null;
+  for(const raw of txt.split(/\n|;|\|/)){const line=raw.trim();if(!line||/^TRK$/i.test(line))continue;const m=line.match(/^([a-z]+)\s*[:=]\s*(.*)$/i);
+    if(m&&(m[1].toLowerCase()==="date"||HKF.some(f=>f[0]===m[1].toLowerCase()))){cur=m[1].toLowerCase();if(cur==="date"){const d=m[2].match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(d)o.date=`${d[1]}-${z(+d[2])}-${z(+d[3])}`;cur=null;continue}V[cur]=V[cur]||[];if(m[2].trim()){const n=numOf(m[2]);if(n!=null)V[cur].push(n)}continue}
+    if(cur){const n=numOf(line);if(n!=null)V[cur].push(n)}}
+  for(const k in V){const L=V[k];if(!L.length)continue;o[k]=["steps","active","basal","exmin","sleep"].includes(k)?L.reduce((a,b)=>a+b,0):k==="hrv"?L.reduce((a,b)=>a+b,0)/L.length:L[0]}
   if(o.sleep!=null){if(o.sleep>1440)o.sleep/=3600;else if(o.sleep>24)o.sleep/=60;o.sleep=Math.round(o.sleep*4)/4}
-  if(o.hrv!=null&&o.hrv<1)o.hrv*=1000;for(const k of["steps","active","basal","exmin"])if(o[k]!=null)o[k]=Math.round(o[k]);return Object.keys(o).filter(k=>k!=="date").length?o:null}
+  if(o.hrv!=null&&o.hrv<1)o.hrv*=1000;if(o.hrv!=null)o.hrv=Math.round(o.hrv);for(const k of["steps","active","basal","exmin"])if(o[k]!=null)o[k]=Math.round(o[k]);return Object.keys(o).filter(k=>k!=="date").length?o:null}
 function applyHK(o){const d=o.date||ymd(new Date());state.hk=state.hk||{};state.hk[d]={...(state.hk[d]||{}),...o,t:Date.now()};delete state.hk[d].date;
   state.hab=state.hab||{};const h=state.hab[d]=state.hab[d]||{};if(o.steps!=null)h.st=o.steps;if(o.sleep!=null)h.s=o.sleep;
   if(o.weight!=null&&o.weight>30){const e=state.body.find(x=>x.d===d);if(e){if(e.w==null)e.w=r1(o.weight)}else state.body.push({d,w:r1(o.weight)})}
@@ -320,24 +324,16 @@ function vWatch(){const d=ui.date,h=hkD(d),R=recovery(d),has=Object.keys(h).leng
 function vHealthSet(){const S=state.settings;return `<details class="card" data-d="Apple Health" ${ui.op["Apple Health"]?"open":""}><summary><h2>⌚ Apple Health</h2></summary>
   <p class="sm">Web apps can't read Apple Health directly, so an Apple Shortcut copies today's numbers and the app imports them. Build the Shortcut once (about 5 minutes):</p>
   <ol class="guide">
-   <li>Open <b>Shortcuts</b> → <b>+</b> → name it <b>Sync Tracker</b>.</li>
-   <li>Add <b>Find Health Samples</b>: Type <b>Steps</b>, Start Date <b>is today</b>. Then <b>Calculate Statistics</b> → <b>Sum</b>. Rename the result <b>Steps</b> (long-press → Rename).</li>
-   <li>Repeat step 2 for <b>Active Energy</b>, <b>Resting Energy</b> and <b>Exercise Minutes</b> (all Sum, all today).</li>
-   <li><b>Find Health Samples</b>: Type <b>Resting Heart Rate</b>, Start Date <b>is in the last 1 day</b>, Sort by Start Date <b>Latest First</b>, Limit <b>1</b>. Do the same for <b>Weight</b> (last 7 days).</li>
-   <li><b>Find Health Samples</b>: Type <b>Heart Rate Variability</b>, last 1 day → <b>Calculate Statistics</b> → <b>Average</b>.</li>
-   <li><b>Find Health Samples</b>: Type <b>Sleep Analysis</b>, Start Date <b>is in the last 1 day</b>, Value <b>is Asleep</b> (pick Core, Deep and REM if it asks). Then <b>Get Details of Health Samples</b> → <b>Duration</b>, then <b>Calculate Statistics</b> → <b>Sum</b>.</li>
-   <li>Add a <b>Text</b> action and type exactly this, tapping each variable in where it says:<pre class="tpl">TRK
-date: [Current Date, format 2026-11-20]
-steps: [Steps]
-active: [Active Energy]
-basal: [Resting Energy]
-exmin: [Exercise Minutes]
-sleep: [Sleep]
-rhr: [Resting Heart Rate]
-hrv: [HRV]
-weight: [Weight]</pre>For the date: tap Current Date → Date Format <b>Custom</b> → <b>yyyy-MM-dd</b>.</li>
-   <li>Add <b>Copy to Clipboard</b>. Done. Run it once and tap <b>Allow</b> on the Health permission.</li>
-   <li>Optional: Automation → <b>Time of Day</b> 10 PM → Run Sync Tracker → <b>Run Immediately</b>. Or add it to your Home Screen next to this app.</li></ol>
+   <li>Open <b>Shortcuts</b> → tap <b>+</b> (top right).</li>
+   <li>Search actions for <b>Text</b>, add it, and type just <b>TRK</b>.</li>
+   <li>Search <b>Add to Variable</b>, add it, name the variable <b>Out</b>.</li>
+   <li><b>Steps block:</b> add <b>Find Health Samples</b> → tap <i>Type</i> → <b>Steps</b> → <i>Add Filter</i> → <b>Start Date</b> <b>is today</b>.</li>
+   <li>Add <b>Text</b>: type <b>steps:</b>, press return, then tap <b>Health Samples</b> in the bar above the keyboard.</li>
+   <li>Add <b>Add to Variable</b> → <b>Out</b>.</li>
+   <li>Repeat 4–6 for <b>Active Energy</b> (<b>active:</b>), <b>Resting Energy</b> (<b>basal:</b>) and <b>Resting Heart Rate</b> (<b>rhr:</b>). Tip: long-press a block's actions → Duplicate, then just change the Type and the word.</li>
+   <li>At the end add <b>Copy to Clipboard</b> and tap its input → <b>Out</b>. Done!</li>
+   <li>Run it once and tap <b>Allow</b> for Health. Then come here and tap <b>Import</b>.</li></ol>
+  <p class="mut sm">Extras later, same pattern: <b>exmin:</b> Exercise Minutes · <b>hrv:</b> Heart Rate Variability · <b>weight:</b> Weight. Sleep needs one more step, so skip it for now and tap it in by hand.</p>
   <p class="sm">Then in this app tap <b>Import</b> on Today (iPhone shows a small "Paste" bubble; tap it). Missing lines are fine; it uses whatever is there.</p>
   <div class="chips"><button class="pri" data-a="hkimp">Import from clipboard</button></div>
   <label class="f" style="margin-top:10px">Or paste it here<textarea id="hkpaste" rows="4" placeholder="TRK&#10;steps: 8432&#10;sleep: 7.2 …"></textarea></label><button data-a="hkpaste">Import pasted text</button>
