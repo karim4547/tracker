@@ -288,38 +288,39 @@ function vBuilder(){
 function mbEntry(){const t=mbTot();if(!t.g)return null;const ing=mbRows().filter(r=>ingOf(r.id)&&parseFloat(r.g)).map(r=>[ingOf(r.id).n,parseFloat(r.g)]);return{n:(ui.mb.name||"").trim()||mbName(),k:r1(t.k),p:r1(t.p),c:r1(t.c),f:r1(t.f),ing,g:t.g}}
 const habD=()=>{state.hab=state.hab||{};return state.hab[ui.date]||{}};
 function setHab(k,v){state.hab=state.hab||{};const h=state.hab[ui.date]=state.hab[ui.date]||{};h[k]=Math.max(0,v);commit()}
-const HKF=[["steps","Steps"],["active","Active energy (kcal)"],["basal","Resting energy (kcal)"],["exmin","Exercise minutes"],["sleep","Sleep (hours)"],["rhr","Resting heart rate"],["hrv","Heart rate variability (ms)"],["weight","Weight (kg)"]];
+const HKF=[["steps","Steps"],["active","Active energy (kcal)"],["basal","Resting energy (kcal)"],["exmin","Exercise minutes"],["rhr","Resting heart rate"],["hrv","Heart rate variability (ms)"],["weight","Weight (kg)"]];
 function numOf(v){v=String(v||"").replace(/,(?=\d{3}\b)/g,"").replace(",",".");const m=v.match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null}
 function parseHK(txt){if(!/TRK/i.test(txt||""))return null;const o={},V={};let cur=null;
   for(const raw of txt.split(/\n|;|\|/)){const line=raw.trim();if(!line||/^TRK$/i.test(line))continue;const m=line.match(/^([a-z]+)\s*[:=]\s*(.*)$/i);
-    if(m&&(m[1].toLowerCase()==="date"||HKF.some(f=>f[0]===m[1].toLowerCase()))){cur=m[1].toLowerCase();if(cur==="date"){const d=m[2].match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(d)o.date=`${d[1]}-${z(+d[2])}-${z(+d[3])}`;cur=null;continue}V[cur]=V[cur]||[];if(m[2].trim()){const n=numOf(m[2]);if(n!=null)V[cur].push(n)}continue}
+    if(m&&!(m[1].toLowerCase()==="date"||HKF.some(f=>f[0]===m[1].toLowerCase()))){cur=null;continue}
+    if(m){cur=m[1].toLowerCase();if(cur==="date"){const d=m[2].match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(d)o.date=`${d[1]}-${z(+d[2])}-${z(+d[3])}`;cur=null;continue}V[cur]=V[cur]||[];if(m[2].trim()){const n=numOf(m[2]);if(n!=null)V[cur].push(n)}continue}
     if(cur){const n=numOf(line);if(n!=null)V[cur].push(n)}}
   for(const k in V){const L=V[k];if(!L.length)continue;o[k]=["steps","active","basal","exmin","sleep"].includes(k)?L.reduce((a,b)=>a+b,0):k==="hrv"?L.reduce((a,b)=>a+b,0)/L.length:L[0]}
   if(o.sleep!=null){if(o.sleep>1440)o.sleep/=3600;else if(o.sleep>24)o.sleep/=60;o.sleep=Math.round(o.sleep*4)/4}
   if(o.hrv!=null&&o.hrv<1)o.hrv*=1000;if(o.hrv!=null)o.hrv=Math.round(o.hrv);for(const k of["steps","active","basal","exmin"])if(o[k]!=null)o[k]=Math.round(o[k]);return Object.keys(o).filter(k=>k!=="date").length?o:null}
 function applyHK(o){const d=o.date||ymd(new Date());state.hk=state.hk||{};state.hk[d]={...(state.hk[d]||{}),...o,t:Date.now()};delete state.hk[d].date;
-  state.hab=state.hab||{};const h=state.hab[d]=state.hab[d]||{};if(o.steps!=null)h.st=o.steps;if(o.sleep!=null)h.s=o.sleep;
+  state.hab=state.hab||{};const h=state.hab[d]=state.hab[d]||{};if(o.steps!=null)h.st=o.steps;
   if(o.weight!=null&&o.weight>30){const e=state.body.find(x=>x.d===d);if(e){if(e.w==null)e.w=r1(o.weight)}else state.body.push({d,w:r1(o.weight)})}
-  commit();const bits=[o.steps!=null&&fmt(o.steps)+" steps",o.active!=null&&fmt(o.active)+" active kcal",o.sleep!=null&&o.sleep+" h sleep",o.rhr!=null&&o.rhr+" bpm",o.hrv!=null&&fmt(o.hrv)+" ms HRV"].filter(Boolean);
+  commit();const bits=[o.steps!=null&&fmt(o.steps)+" steps",o.active!=null&&fmt(o.active)+" active kcal",o.rhr!=null&&o.rhr+" bpm",o.hrv!=null&&fmt(o.hrv)+" ms HRV"].filter(Boolean);
   confetti();toast(`⌚ Synced from Apple Health${bits.length?": "+bits.slice(0,3).join(" · "):""}`,"good")}
 async function importHK(){try{const t=await navigator.clipboard.readText();const o=parseHK(t);if(o){applyHK(o);return}toast("Clipboard doesn't have Health data. Run the Shortcut first, or paste it in Settings → Apple Health.","warn")}catch(e){ui.op["Apple Health"]=true;location.hash="targets";toast("Couldn't read the clipboard. Paste it in the box here instead.","warn")}}
 const hkD=d=>(state.hk||{})[d]||{};
 function hkBase(k,d,n){const out=[];const t=pd(d);for(let i=1;i<=n;i++){const x=new Date(t);x.setDate(x.getDate()-i);const v=hkD(ymd(x))[k];if(v!=null)out.push(v)}return out.length>=3?out.reduce((a,b)=>a+b,0)/out.length:null}
-function recovery(d){const h=hkD(d),S=state.settings;if(h.rhr==null&&h.hrv==null&&h.sleep==null)return null;let sc=60,why=[];
+function recovery(d){const h=hkD(d),S=state.settings,sl=((state.hab||{})[d]||{}).s;if(h.rhr==null&&h.hrv==null&&!sl)return null;let sc=60,why=[];
   const bh=hkBase("hrv",d,14),br=hkBase("rhr",d,14);
   if(h.hrv!=null&&bh){const z=(h.hrv-bh)/bh;sc+=Math.max(-25,Math.min(20,z*120));why.push(`HRV ${fmt(h.hrv)} ms (usual ${fmt(bh)})`)}else if(h.hrv!=null)why.push(`HRV ${fmt(h.hrv)} ms`);
   if(h.rhr!=null&&br){const z=(br-h.rhr)/br;sc+=Math.max(-25,Math.min(15,z*250));why.push(`resting HR ${fmt(h.rhr)} (usual ${fmt(br)})`)}else if(h.rhr!=null)why.push(`resting HR ${fmt(h.rhr)}`);
-  if(h.sleep!=null){sc+=(Math.min(1.1,h.sleep/S.sleep)-0.85)*60;why.push(`${h.sleep} h sleep`)}
+  if(sl){sc+=(Math.min(1.1,sl/S.sleep)-0.85)*60;why.push(`${sl} h sleep`)}
   sc=Math.round(Math.max(5,Math.min(100,sc)));const lv=sc>=75?["Ready to push","var(--grn)","Go for rep and weight increases today."]:sc>=55?["Normal","var(--yel)","Train as planned."]:["Take it easier","var(--red)","Keep the weights, skip extra sets, focus on form and sleep tonight."];
   return{sc,lv,why,base:!!(bh||br)}}
 function burnTD(S){const td=new Date();td.setHours(0,0,0,0);const v=[];for(let i=1;i<=14;i++){const x=new Date(td);x.setDate(x.getDate()-i);const h=hkD(ymd(x));if(h.active!=null&&h.basal!=null&&h.basal>800)v.push(h.active+h.basal)}
   if(S.burn!=="est"&&v.length>=3){const raw=v.reduce((a,b)=>a+b,0)/v.length;return{v:raw*(S.wf||0.9),src:`Apple Watch, ${v.length}-day average`,n:v.length}}return{v:tdeeOf(S),src:"estimate",n:0}}
 function vWatch(){const d=ui.date,h=hkD(d),R=recovery(d),has=Object.keys(h).length>1;
-  if(!has)return`<section class="card watch"><div class="exh"><h2 style="margin:0">⌚ Apple Watch</h2><button class="pri" data-a="hkimp">Import</button></div><p class="mut sm">Run your Health Shortcut, then tap Import to pull in steps, sleep, calories burned, resting HR and HRV. Set it up in Settings → Apple Health.</p></section>`;
+  if(!has)return`<section class="card watch"><div class="exh"><h2 style="margin:0">⌚ Apple Watch</h2><button class="pri" data-a="hkimp">Import</button></div><p class="mut sm">Run your Health Shortcut, then tap Import to pull in steps, calories burned, resting HR and HRV. Set it up in Settings → Apple Health.</p></section>`;
   const T=(ic,v,l)=>v==null?"":`<div class="wt"><span>${ic}</span><b>${v}</b><span class="mut sm">${l}</span></div>`;
   return `<section class="card watch"><div class="exh"><h2 style="margin:0">⌚ Apple Watch</h2><button data-a="hkimp">↻ Sync</button></div>
   ${R?`<div class="rec" style="--c:${R.lv[1]}"><div class="rsc"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="34" fill="none" stroke="var(--soft)" stroke-width="9"/><circle class="arc" cx="42" cy="42" r="34" fill="none" stroke="${R.lv[1]}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(213.6*R.sc/100).toFixed(1)} 213.6" transform="rotate(-90 42 42)"/><text x="42" y="49" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">${R.sc}</text></svg></div><div><div class="mut sm">Recovery</div><b class="big2" style="color:${R.lv[1]}">${R.lv[0]}</b><p class="sm">${R.lv[2]}</p><p class="mut sm">${R.why.join(" · ")}${R.base?"":" · baseline builds after 3 days of syncs"}</p></div></div>`:""}
-  <div class="wts">${T("👟",h.steps!=null?fmt(h.steps):null,"steps")}${T("🔥",h.active!=null?fmt(h.active):null,"active kcal")}${T("⚡",h.active!=null&&h.basal!=null?fmt(h.active+h.basal):null,"total burn")}${T("⏱",h.exmin,"exercise min")}${T("😴",h.sleep,"h sleep")}${T("❤️",h.rhr,"resting bpm")}${T("📈",h.hrv!=null?fmt(h.hrv):null,"HRV ms")}</div>
+  <div class="wts">${T("👟",h.steps!=null?fmt(h.steps):null,"steps")}${T("🔥",h.active!=null?fmt(h.active):null,"active kcal")}${T("⚡",h.active!=null&&h.basal!=null?fmt(h.active+h.basal):null,"total burn")}${T("⏱",h.exmin,"exercise min")}${T("❤️",h.rhr,"resting bpm")}${T("📈",h.hrv!=null?fmt(h.hrv):null,"HRV ms")}</div>
   <p class="mut sm">Synced ${h.t?new Date(h.t).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):""}. Sync again later for updated numbers.</p></section>`}
 function vHealthSet(){const S=state.settings;return `<details class="card" data-d="Apple Health" ${ui.op["Apple Health"]?"open":""}><summary><h2>⌚ Apple Health</h2></summary>
   <p class="sm">Web apps can't read Apple Health directly, so an Apple Shortcut copies today's numbers and the app imports them. Build the Shortcut once (about 5 minutes):</p>
@@ -333,7 +334,7 @@ function vHealthSet(){const S=state.settings;return `<details class="card" data-
    <li>Repeat 4–6 for <b>Active Energy</b> (<b>active:</b>), <b>Resting Energy</b> (<b>basal:</b>) and <b>Resting Heart Rate</b> (<b>rhr:</b>). Tip: long-press a block's actions → Duplicate, then just change the Type and the word.</li>
    <li>At the end add <b>Copy to Clipboard</b> and tap its input → <b>Out</b>. Done!</li>
    <li>Run it once and tap <b>Allow</b> for Health. Then come here and tap <b>Import</b>.</li></ol>
-  <p class="mut sm">Extras later, same pattern: <b>exmin:</b> Exercise Minutes · <b>hrv:</b> Heart Rate Variability · <b>weight:</b> Weight. Sleep needs one more step, so skip it for now and tap it in by hand.</p>
+  <p class="mut sm">Extras later, same pattern: <b>exmin:</b> Exercise Minutes · <b>hrv:</b> Heart Rate Variability · <b>weight:</b> Weight. Sleep isn't synced: log your hours under Habits each morning and the coach uses them.</p>
   <p class="sm">Then in this app tap <b>Import</b> on Today (iPhone shows a small "Paste" bubble; tap it). Missing lines are fine; it uses whatever is there.</p>
   <div class="chips"><button class="pri" data-a="hkimp">Import from clipboard</button></div>
   <label class="f" style="margin-top:10px">Or paste it here<textarea id="hkpaste" rows="4" placeholder="TRK&#10;steps: 8432&#10;sleep: 7.2 …"></textarea></label><button data-a="hkpaste">Import pasted text</button>
@@ -376,6 +377,10 @@ function coachCard(){
   else if(pl<=0&&kl>=0)lines.push(`🎉 Protein done (${fmt(t.p)} g) with ${fmt(kl)} kcal to spare.`);
   else if(kl<0)lines.push(`⚠️ ${fmt(-kl)} kcal over. No stress: one day doesn't undo a week. Back on target tomorrow.`);
   else if(pl>0)lines.push(`🥩 Calories are used up but you're ${fmt(pl)} g short on protein. A HiPRO cup is the leanest fix.`);
+  {const sl=habD().s,S2=state.settings;if(isT&&!sl&&hr>=6)lines.push(`😴 How long did you sleep last night? <button class="lnk" data-a="goslp">Log it under Habits →</button>`);
+   else if(sl&&sl<S2.sleep-1.5)lines.push(`😴 Only ${sl} h of sleep. ${P&&!trained?"Train, but keep the weights from last session and skip extra sets. ":""}Muscle and fat loss both suffer on short sleep, so aim for bed by ${(()=>{const t=new Date();t.setHours(7,0,0,0);t.setMinutes(t.getMinutes()-S2.sleep*60);return t.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})})()} tonight.`);
+   else if(sl&&sl<S2.sleep)lines.push(`😴 ${sl} h of sleep, a bit under your ${S2.sleep} h goal. Try to get to bed 30–45 min earlier tonight.`);
+   else if(sl)lines.push(`😴 ${sl} h of sleep, goal hit. Good night for recovery.`)}
   const h=habD();if(isT&&hr>=14&&(h.w||0)*0.25<S.water/2)lines.push("💧 You're behind on water. Have a glass now.");
   return `<section class="card coachc"><div class="mut sm">${isT?g+", "+esc((S.name||"").split("'")[0]||"champ"):nice(ui.date)}</div>${lines.map(l=>`<div class="cl">${l}</div>`).join("")}</section>`;
 }
@@ -989,6 +994,7 @@ document.addEventListener("click",e=>{
   else if(a==="set"){const i=b.dataset.i,w=parseFloat(document.getElementById("w"+i).value)||0,r=parseInt(document.getElementById("r"+i).value,10);if(!r){document.getElementById("r"+i).focus();return}logSet(b.dataset.n,w,r,b.dataset.tg);commit();startRest()}
   else if(a==="rmset"){const W=curW(),ex=W&&W.ex.find(x=>norm(x.n)===norm(b.dataset.n));if(ex){ex.sets.splice(+b.dataset.j,1);commit()}}
   else if(a==="addex"){const n=document.getElementById("newex").value.trim();if(!n)return;const W=ensureW();if(!W.ex.some(x=>norm(x.n)===norm(n)))W.ex.push({n,sets:[]});commit()}
+  else if(a==="goslp"){const h=document.querySelector(".habs");if(h)h.scrollIntoView({behavior:"smooth",block:"center"})}
   else if(a==="hkimp"){importHK()}
   else if(a==="hkpaste"){const t=document.getElementById("hkpaste");const o=parseHK(t?t.value:"");if(o){applyHK(o)}else toast("That doesn't look like Health data. It should start with TRK.","warn")}
   else if(a==="addon"){openAO(b.dataset.id)}
