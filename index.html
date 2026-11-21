@@ -962,11 +962,17 @@ function vPhotos(){const L=phs(),pose=ui.php||"front",D=phDates(pose),today=ymd(
   <p class="mut sm">${!L.length?"Take front, side and back photos once a week: same spot, same light, same time (morning, before eating). The app lines them up and shows what changed.":since>=7?"It's been a week. Time for this week's set!":`Next set in ${7-since} day${7-since===1?"":"s"}. Same spot, same light.`}</p>
   <div class="two"><label class="f">Date<input type="date" id="phd" value="${ui.phd}" max="${today}"></label><label class="f">Pose<select id="phpose2">${POSES.map(([k,l])=>`<option value="${k}" ${(ui.php2||"front")===k?"selected":""}>${l}</option>`).join("")}</select></label></div>
   <div class="two" style="margin-top:8px"><button class="pri" data-a="phcam">📷 Camera + ghost</button><label class="ghost wide" style="display:grid;place-items:center;border-radius:14px;font-weight:700;cursor:pointer;min-height:46px;border:1px solid var(--line,#8884)">🖼️ From library<input type="file" id="phfile" accept="image/*" multiple hidden></label></div>
-  <p class="mut sm" style="margin:8px 0 0">Camera mode overlays your last ${POSES.find(p=>p[0]===(ui.php2||"front"))[1].toLowerCase()} photo as a faint ghost so you can match the pose, plus a self-timer.</p></section>
+  <p class="mut sm" style="margin:8px 0 0">Camera mode overlays your last ${POSES.find(p=>p[0]===(ui.php2||"front"))[1].toLowerCase()} photo as a faint ghost so you can match the pose, plus a self-timer.</p><label class="lnk" style="display:inline-block;margin-top:6px;cursor:pointer">📦 Import photo pack<input type="file" id="phpackf" accept=".json,application/json,text/plain" hidden></label></section>
   ${L.length?`<section class="card"><h2>Before / after</h2>${seg}${D.length>=2?`<div class="two"><label class="f">Before<select id="pha">${opt(a)}</select></label><label class="f">After<select id="phb">${opt(b)}</select></label></div>`:`<p class="mut sm">Add a second ${pose} photo on another day to compare.</p>`}
   ${cmp?`<div class="phcmp" id="phcmp" style="--x:50%"><img data-ph="${A.id}" alt="Before"><div class="phaft"><img data-ph="${B.id}" alt="After"></div><i class="phbar"></i><span class="phl">${short(a)}</span><span class="phr">${short(b)}</span></div><p class="mut sm" style="margin:6px 0 0;text-align:center">Drag across the photo to compare</p>
   <div class="two" style="margin-top:10px"><button class="ghost" data-a="phplay">▶ Timelapse</button><button class="ghost" data-a="phshare">⤴ Share</button></div>${phAnalysis(a,b)}`:D.length===1&&A?`<div class="phcmp one"><img data-ph="${A.id}" alt="Photo"></div>`:""}</section>
   <section class="card"><h2>All photos · ${L.length}</h2>${grid}<p class="mut sm" style="margin-top:10px">Photos stay on this phone only (not in backups or the Claude version). Tap one to view or delete it.</p></section>`:""}`}
+async function importPack(f){try{const t=await f.text();let J;try{J=JSON.parse(t)}catch(e){toast("That isn't a photo pack file.","warn");return false}if(!J||!Array.isArray(J.items)){toast("That isn't a photo pack file.","warn");return false}
+  state.photos=state.photos||[];const have=new Set(state.photos.map(p=>p.src).filter(Boolean));let n=0;toast(`Importing ${J.items.length} photos…`,"good");
+  for(let i=0;i<J.items.length;i++){const it=J.items[i],sig="pk|"+it.d+"|"+it.pose+"|"+i;if(have.has(sig)||!it.b)continue;const bin=Uint8Array.from(atob(it.b),c=>c.charCodeAt(0)),id="ph"+uid();await PDB.put(id,new Blob([bin],{type:"image/jpeg"}));state.photos.push({id,d:it.d,pose:it.pose||"front",t:Date.now()+i,src:sig});n++}
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+  commit();if(n){confetti();sfx("win")}toast(n?`📸 ${n} photos imported`:"Those photos are already here.","good");return true}
+  catch(e){toast("Import failed. Use the home-screen app and try again.","warn");return false}}
 async function phPlay(){const pose=ui.php||"front",L=phs().filter(p=>p.pose===pose);if(L.length<2)return;sheet(`<h2>▶ ${POSES.find(p=>p[0]===pose)[1]} timelapse</h2><div class="phcmp one"><img id="tlimg" alt="Timelapse frame"></div><p style="text-align:center;margin:8px 0"><b id="tld"></b></p>`);
   const U=[];for(const p of L)U.push([await phURL(p.id),p.d]);let i=0;const im=document.getElementById("tlimg"),dl=document.getElementById("tld");const step=()=>{if(!document.getElementById("tlimg"))return;const[u,d]=U[i%U.length];if(u)im.src=u;dl.textContent=nice(d)+(i%U.length===U.length-1?" · now":"");i++;setTimeout(step,i%U.length===0?1600:700)};step()}
 async function phShare(){const pose=ui.php||"front",D=phDates(pose);let a=ui.pha&&D.includes(ui.pha)?ui.pha:D[0],b=ui.phb&&D.includes(ui.phb)?ui.phb:D[D.length-1];if(a>b)[a,b]=[b,a];
@@ -1326,6 +1332,7 @@ document.addEventListener("change",e=>{const t=e.target;
   if(t.id==="phd"){ui.phd=t.value||ymd(new Date());return}
   if(t.id==="phpose2"){ui.php2=t.value;render();return}
   if(t.id==="pha"||t.id==="phb"){ui[t.id]=t.value;render();return}
+  if(t.id==="phpackf"){const f=t.files[0];t.value="";if(f)importPack(f);return}
   if(t.id==="phfile"){const F=[...t.files];t.value="";(async()=>{for(let i=0;i<F.length;i++){const pose=F.length>1?POSES[i%3][0]:(ui.php2||"front");try{await savePhoto(await fileToBlob(F[i]),pose,ui.phd||ymd(new Date()))}catch(e){toast("Couldn't read that photo.","warn")}}})();return}
   if(t.dataset.s){const v=parseFloat(t.value);state.settings[t.dataset.s]=isNaN(v)?0:v;commit()}
   else if(t.dataset.ss){state.settings[t.dataset.ss]=t.value.trim()||(t.dataset.ss==="name"?"My Tracker":t.value);commit();if(t.dataset.ss==="gist"){if(gistId())cloudPull(1).then(ok=>{if(ok)render()});else if(t.value.trim())toast("That doesn't look like a gist link. Copy it from the gist page's address bar.","warn")}}
@@ -1354,7 +1361,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-21f";
+const BUILD="2026-11-21g";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
