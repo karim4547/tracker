@@ -1357,11 +1357,12 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS[h]&&h!==ui.tab){ui.tab=h;ui.msg="";ui.enter=1;render();window.scrollTo(0,0)}});
 try{if(!state.achInit)checkAch()}catch(e){}
 try{if((state.ingv||0)<4){ingUp3();localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("lychee1")){if(!state.foods.some(f=>/^Lychee warm bowl/.test(f.n)))state.foods.unshift({id:uid(),n:"Lychee warm bowl (corn + red beans)",u:"1 bowl",k:960,p:67,c:115,f:27});state.seeded.push("lychee1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.restEnd=0;
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-21g";
+const BUILD="2026-11-21h";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
