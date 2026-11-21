@@ -940,7 +940,7 @@ function shrinkTo(src,w0,h0,mirror){const M=1280,s=Math.min(1,M/Math.max(w0,h0))
 async function fileToBlob(f){const u=URL.createObjectURL(f);try{const im=new Image();im.src=u;await im.decode();return await shrinkTo(im,im.naturalWidth,im.naturalHeight)}finally{URL.revokeObjectURL(u)}}
 async function savePhoto(blob,pose,d){if(!blob)return toast("Couldn't read that photo.","warn");const id="ph"+uid();try{await PDB.put(id,blob)}catch(e){return toast("This browser won't store photos. Use the home-screen app.","warn")}
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
-  state.photos=state.photos||[];state.photos.push({id,d,pose,t:Date.now()});sfx("add");commit();toast(`📸 ${POSES.find(p=>p[0]===pose)[1]} photo saved for ${short(d)}`,"good")}
+  state.photos=state.photos||[];state.photos.push({id,d,pose,t:Date.now()});sfx("add");commit();aiSoon();toast(`📸 ${POSES.find(p=>p[0]===pose)[1]} photo saved for ${short(d)}`,"good")}
 function nearBody(d,k,win=10){let best=null,bd=1e9;for(const e of state.body){if(e[k]==null)continue;const dd=Math.abs(pd(e.d)-pd(d))/DAY;if(dd<=win&&dd<bd){bd=dd;best=e}}return best?best[k]:null}
 function topLifts(){const c={};for(const w of state.workouts)for(const e of w.ex)if(e.sets.some(s=>s.w>0))c[norm(e.n)]=[e.n,(c[norm(e.n)]||[0,0])[1]+1];return Object.values(c).sort((a,b)=>b[1]-a[1]).slice(0,4).map(x=>x[0])}
 function bestE1(n,d){let b=0;for(const w of state.workouts){if(w.d>d||(pd(d)-pd(w.d))/DAY>21)continue;const e=w.ex.find(x=>norm(x.n)===norm(n));if(e)for(const s of e.sets)b=Math.max(b,e1(s.w,s.r))}return b}
@@ -964,7 +964,8 @@ function vPhotos(){const L=phs(),pose=ui.php||"front",D=phDates(pose),today=ymd(
   <p class="mut sm">${!L.length?"Take front, side and back photos once a week: same spot, same light, same time (morning, before eating). The app lines them up and shows what changed.":since>=7?"It's been a week. Time for this week's set!":`Next set in ${7-since} day${7-since===1?"":"s"}. Same spot, same light.`}</p>
   <div class="two"><label class="f">Date<input type="date" id="phd" value="${ui.phd}" max="${today}"></label><label class="f">Pose<select id="phpose2">${POSES.map(([k,l])=>`<option value="${k}" ${(ui.php2||"front")===k?"selected":""}>${l}</option>`).join("")}</select></label></div>
   <div class="two" style="margin-top:8px"><button class="pri" data-a="phcam">📷 Camera + ghost</button><label class="ghost wide" style="display:grid;place-items:center;border-radius:14px;font-weight:700;cursor:pointer;min-height:46px;border:1px solid var(--line,#8884)">🖼️ From library<input type="file" id="phfile" accept="image/*" multiple hidden></label></div>
-  <p class="mut sm" style="margin:8px 0 0">Camera mode overlays your last ${POSES.find(p=>p[0]===(ui.php2||"front"))[1].toLowerCase()} photo as a faint ghost so you can match the pose, plus a self-timer.</p><label class="lnk" style="display:inline-block;margin-top:6px;cursor:pointer">📦 Import photo pack<input type="file" id="phpackf" accept=".json,application/json,text/plain" hidden></label> <a class="lnk" style="display:inline-block;margin:6px 0 0 14px" href="https://claude.ai/artifact/4wtVTGNHG4K13QqBtNzQWT" target="_blank" rel="noopener">🧠 AI coach analysis →</a></section>
+  <p class="mut sm" style="margin:8px 0 0">Camera mode overlays your last ${POSES.find(p=>p[0]===(ui.php2||"front"))[1].toLowerCase()} photo as a faint ghost so you can match the pose, plus a self-timer.</p><label class="lnk" style="display:inline-block;margin-top:6px;cursor:pointer">📦 Import photo pack<input type="file" id="phpackf" accept=".json,application/json,text/plain" hidden></label></section>
+  ${aiCard()}
   ${L.length?`<section class="card"><h2>Before / after</h2>${seg}${D.length>=2?`<div class="two"><label class="f">Before<select id="pha">${opt(a)}</select></label><label class="f">After<select id="phb">${opt(b)}</select></label></div>`:`<p class="mut sm">Add a second ${pose} photo on another day to compare.</p>`}
   ${cmp?`<div class="seg" style="margin:4px 0 8px"><button data-a="phmode" data-k="sl" class="${ui.phm!=="sbs"?"on":""}">⇆ Slider</button><button data-a="phmode" data-k="sbs" class="${ui.phm==="sbs"?"on":""}">◫ Side by side</button></div>
   ${ui.phm==="sbs"?`<div class="phsbs"><div><img data-ph="${A.id}" alt="Before" style="${tfS(A)}"><span class="phl">${short(a)}</span></div><div><img data-ph="${B.id}" alt="After" style="${tfS(B)}"><span class="phl">${short(b)}</span></div></div>`:`<div class="phcmp" id="phcmp" style="--x:50%"><img data-ph="${A.id}" alt="Before" style="${tfS(A)}"><div class="phaft"><img data-ph="${B.id}" alt="After" style="${tfS(B)}"></div><i class="phbar"></i><span class="phl">${short(a)}</span><span class="phr">${short(b)}</span></div><p class="mut sm" style="margin:6px 0 0;text-align:center">Drag across the photo to compare</p>`}
@@ -975,7 +976,7 @@ async function importPack(f){try{const t=await f.text();let J;try{J=JSON.parse(t
   state.photos=state.photos||[];const have=new Set(state.photos.map(p=>p.src).filter(Boolean));let n=0;toast(`Importing ${J.items.length} photos…`,"good");
   for(let i=0;i<J.items.length;i++){const it=J.items[i],sig="pk|"+it.d+"|"+it.pose+"|"+i;if(have.has(sig)||!it.b)continue;const bin=Uint8Array.from(atob(it.b),c=>c.charCodeAt(0)),id="ph"+uid();await PDB.put(id,new Blob([bin],{type:"image/jpeg"}));state.photos.push({id,d:it.d,pose:it.pose||"front",t:Date.now()+i,src:sig});n++}
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
-  commit();if(n){confetti();sfx("win")}toast(n?`📸 ${n} photos imported`:"Those photos are already here.","good");return true}
+  commit();if(n){confetti();sfx("win");aiSoon()}toast(n?`📸 ${n} photos imported`:"Those photos are already here.","good");return true}
   catch(e){toast("Import failed. Use the home-screen app and try again.","warn");return false}}
 const tfT=t=>t?`translate(${t.x||0}%,${t.y||0}%) scale(${t.s||1})`:"",tfS=p=>p&&p.tf?`transform:${tfT(p.tf)}`:"";
 function phAlign(p,ref){ui.al={id:p.id,x:0,y:0,s:1,...(p.tf||{})};
@@ -988,6 +989,67 @@ function phAlign(p,ref){ui.al={id:p.id,x:0,y:0,s:1,...(p.tf||{})};
   el.addEventListener("pointermove",e=>{if(!st)return;const r=el.getBoundingClientRect();ui.al.x=st.ox+(e.clientX-st.x)/r.width*100;ui.al.y=st.oy+(e.clientY-st.y)/r.height*100;ap()});
   const end=()=>st=null;el.addEventListener("pointerup",end);el.addEventListener("pointercancel",end);
   document.getElementById("phz").addEventListener("input",e=>{ui.al.s=+e.target.value/100;ap()});ui.alap=ap}
+const GK=()=>{try{return localStorage.getItem("trk-gem")||""}catch(e){return""}};
+async function gemModel(key){try{const c=localStorage.getItem("trk-gem-m");if(c)return c}catch(e){}
+  const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key="+encodeURIComponent(key));if(!r.ok)throw new Error(r.status===400||r.status===403?"key":"net");
+  const J=await r.json(),M=(J.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/","")).filter(n=>/gemini/.test(n)&&!/(embed|tts|image|audio|live|lite|thinking-exp|learnlm|nano)/.test(n));
+  const score=n=>{const v=parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/)||[])[1]||0);return v*10+(/flash/.test(n)?3:0)+(/pro/.test(n)?1:0)-(/preview|exp/.test(n)?0.5:0)-(/\d{3}$/.test(n)?0.2:0)};
+  const m=M.sort((a,b)=>score(b)-score(a))[0];if(!m)throw new Error("nomodel");try{localStorage.setItem("trk-gem-m",m)}catch(e){}return m}
+async function gemCall(parts,json){const key=GK();if(!key)throw new Error("nokey");const m=await gemModel(key);
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{role:"user",parts}],generationConfig:{temperature:.4,...(json?{responseMimeType:"application/json"}:{})}})});
+  if(r.status===429)throw new Error("rate");if(r.status===404){try{localStorage.removeItem("trk-gem-m")}catch(e){}throw new Error("model")}if(!r.ok)throw new Error(r.status===400||r.status===403?"key":"net");
+  const J=await r.json(),t=((((J.candidates||[])[0]||{}).content||{}).parts||[]).map(p=>p.text||"").join("");if(!t)throw new Error("empty");return t}
+async function img64(id,max=640){const u=await phURL(id);if(!u)return null;const im=new Image();im.src=u;await im.decode();const s=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.82).split(",")[1]}
+const AIA=[["leanness","Leanness"],["shoulders","Shoulders"],["arms","Arms"],["chest","Chest"],["back","Back"],["core","Core / waist"]];
+let aiBusy=0,aiTimer=null;
+function aiSoon(){if(!GK())return;clearTimeout(aiTimer);aiTimer=setTimeout(()=>aiAnalyze(),2500)}
+function aiErr(e){const m=e&&e.message;return m==="nokey"?"Add your Gemini key first.":m==="key"?"Google rejected the key. Check it in the AI coach settings.":m==="rate"?"Gemini's free limit was hit. Try again in a minute.":m==="model"?"Model changed on Google's side; tap Analyze again.":"Couldn't reach Gemini. Check your connection and try again."}
+async function aiAnalyze(){if(aiBusy)return;const dates=[...new Set(phs().map(p=>p.d))];if(!dates.length)return;aiBusy=1;render();
+  try{const cur=dates[dates.length-1],base=dates[0],prev=dates.length>2?dates[dates.length-2]:null,want=[];
+    const add=(d,tag)=>{for(const[p,l] of POSES){const x=phOf(p,d);if(x)want.push([x,`${tag} · ${l} · ${nice(d)}`])}};add(cur,"CURRENT");if(base!==cur)add(base,"BASELINE");if(prev&&prev!==base)add(prev,"PREVIOUS");
+    const parts=[],labels=[];for(const[x,l] of want){const b=await img64(x.id);if(b){labels.push(l);parts.push({inline_data:{mime_type:"image/jpeg",data:b}})}}
+    const R=(state.coach||{}).reports||[],last=R[R.length-1],S=state.settings;
+    const body=dates.map(d=>{const w=nearBody(d,"w",4),wa=nearBody(d,"waist",4),bf=nearBody(d,"pbf",7);return(w||wa||bf)?`${d}: ${w?w+" kg":""} ${wa?"waist "+wa+" cm":""} ${bf!=null?"scan BF "+bf+"%":""}`:null}).filter(Boolean).join("\n")||"none";
+    const lifts=topLifts().map(n=>{const a=bestE1(n,base),b=bestE1(n,cur);return a&&b?`${n}: est. 1RM ${Math.round(a)} → ${Math.round(b)} kg`:null}).filter(Boolean).join("; ")||"not enough data";
+    const span=Object.keys(state.logs).filter(d=>d>=base&&d<=cur&&state.logs[d].length),avgK=span.length?Math.round(span.reduce((s,d)=>s+tot(state.logs[d]).k,0)/span.length):null,avgP=span.length?Math.round(span.reduce((s,d)=>s+tot(state.logs[d]).p,0)/span.length):null;
+    const prompt=`You are an experienced, honest physique coach reviewing a client's progress photos. Be specific and visual: name the muscle groups and what you actually see. Do not flatter and do not invent changes you cannot see. Account for lighting, camera angle, distance, flexing and post-workout pump, and say when they limit your judgement.
+
+CLIENT: ${state.profileAI||`Karim, ${S.age||21}, male. Goal: body recomposition, losing fat while building muscle. Calorie target ${S.kMin}-${S.kMax} kcal, protein ${S.protein} g. Trains 4 days a week on an Arnold-style split (chest + back, shoulders + arms, legs). Photos at home under an overhead ceiling light; back and side shots usually flexed, some right after training.`}
+
+PHOTOS in the order attached:
+${labels.map((l,i)=>`${i+1}. ${l}`).join("\n")}
+
+Logged body data: ${body}
+Strength change on main lifts (${base} → ${cur}): ${lifts}
+Average intake over the period: ${avgK?avgK+" kcal, "+avgP+" g protein a day":"not logged"}
+${last?`YOUR PREVIOUS REPORT (${last.d}): ${last.r.summary}\nPrevious scores: ${JSON.stringify(last.r.scores)}`:"This is the first report."}
+
+Score each area 1-10 for the CURRENT photos (10 = stage-ready; a fit, lean gym-goer is about 7). Stay consistent with your previous scores; change a score only for a change you can see.
+
+Reply with ONLY JSON: {"summary":"2-3 sentence verdict","scores":{"overall":n,"leanness":n,"shoulders":n,"arms":n,"chest":n,"back":n,"core":n},"bf_range":"e.g. 16-19%","since_previous":[..],"since_baseline":[..],"strengths":[..],"lagging":[..],"training_focus":[..],"nutrition_focus":[..],"photo_tips":[..]}`;
+    const t=await gemCall([{text:prompt},...parts],true),a=t.indexOf("{"),b=t.lastIndexOf("}"),r=JSON.parse(t.slice(a,b+1));
+    state.coach=state.coach||{reports:[]};state.coach.reports.push({d:cur,at:Date.now(),n:parts.length,r});aiBusy=0;commit();sfx("win");toast("🧠 New coach report is ready","good")}
+  catch(e){aiBusy=0;render();toast(aiErr(e),"warn")}}
+async function aiAsk(q){const R=(state.coach||{}).reports||[],last=R[R.length-1],d=[...new Set(phs().map(p=>p.d))].pop();ui.aiAns="Thinking…";render();
+  try{const parts=[];for(const[p] of POSES){const x=d&&phOf(p,d);if(x){const b=await img64(x.id);if(b)parts.push({inline_data:{mime_type:"image/jpeg",data:b}})}}
+    ui.aiAns=await gemCall([{text:`You are Karim's physique coach. ${last?"Your latest report ("+last.d+"): "+JSON.stringify(last.r):""}\nAttached: his latest photos. His goal is a recomp (lose fat, build muscle) on a 4-day Arnold split. Answer directly and specifically in under 180 words, plain text, no markdown.\n\nQuestion: ${q}`},...parts],false)}
+  catch(e){ui.aiAns=aiErr(e)}render()}
+function aiCard(){const key=GK(),R=(state.coach||{}).reports||[],last=R[R.length-1],pr=R[R.length-2],s=last?last.r.scores||{}:{},ps=pr?pr.r.scores||{}:{};
+  const li=(t,a)=>a&&a.length?`<p style="margin:10px 0 2px"><b>${t}</b></p><ul style="margin:0;padding-left:20px">${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:"";
+  if(!key)return`<section class="card"><h2>🧠 AI coach</h2><p class="sm">Get a real photo analysis that updates every time you add photos. It runs on Google Gemini's free tier.</p>
+  <ol class="guide sm"><li>Open <b>aistudio.google.com/apikey</b> and sign in with your Google account.</li><li>Tap <b>Create API key</b> and copy it.</li><li>Paste it here. It stays on this phone only.</li></ol>
+  <label class="f">Gemini API key<input id="gemk" type="password" autocomplete="off" placeholder="AIza…"></label><button class="pri wide" style="margin-top:8px" data-a="gemsave">Save key</button>
+  <p class="mut sm" style="margin-top:8px">Privacy: on Google's free tier, what you send (your photos) may be used by Google to improve its products and can be seen by human reviewers. Turning on billing in Google Cloud stops that.</p></section>`;
+  return`<section class="card"><div class="exh"><h2 style="margin:0">🧠 AI coach</h2>${last?`<span class="tag">${short(last.d)}</span>`:""}</div>
+  ${aiBusy?`<p class="sm" style="margin:10px 0">⏳ Coach is studying your photos…</p>`:""}
+  ${last?`<div style="display:flex;gap:16px;align-items:center;margin:12px 0"><div style="font-weight:800;font-size:54px;line-height:1;color:var(--acc,#ff5a1f);white-space:nowrap">${s.overall??"–"}<span style="font-size:16px;color:var(--mut,#888)">/10</span></div><div class="sm">${esc(last.r.summary)}<div class="mut" style="margin-top:4px">Est. body fat ${esc(last.r.bf_range||"–")}</div></div></div>
+  ${AIA.map(([k,l])=>{const v=s[k],dd=ps[k]!=null&&v!=null?v-ps[k]:null;return`<div style="display:grid;grid-template-columns:7em minmax(0,1fr) 3.2em;gap:10px;align-items:center;margin:6px 0" class="sm"><span>${l}</span><span style="height:9px;border-radius:9px;background:var(--soft);overflow:hidden"><i style="display:block;height:100%;width:${(v||0)*10}%;background:var(--acc,#ff5a1f);border-radius:9px"></i></span><span style="text-align:right">${v??"–"}${dd?` <b class="${dd>0?"ok":"bad"}">${dd>0?"+":""}${dd}</b>`:""}</span></div>`}).join("")}
+  ${li("Since last check-in",last.r.since_previous)}${li("Since day one",last.r.since_baseline)}${li("Strengths",last.r.strengths)}${li("Lagging",last.r.lagging)}${li("Training focus",last.r.training_focus)}${li("Nutrition focus",last.r.nutrition_focus)}${li("Better photos next time",last.r.photo_tips)}
+  ${R.length>1?`<p class="sm" style="margin-top:12px"><b>Overall score over time:</b> ${R.map(x=>`${short(x.d)} <b>${(x.r.scores||{}).overall??"–"}</b>`).join(" → ")}</p>`:""}
+  <p class="mut sm">Visual estimate from photos by Gemini, not a measurement.</p>`:`<p class="sm">Ready to analyse your ${phs().length} photos.</p>`}
+  <div class="two" style="margin-top:8px"><button class="${last?"ghost":"pri"}" data-a="aigo" ${aiBusy?"disabled":""}>${last?"↻ Re-analyze":"Analyze my progress"}</button><button class="ghost" data-a="gemclr">Remove key</button></div>
+  ${last?`<label class="f" style="margin-top:12px">Ask the coach<input id="aiq" placeholder="Is my chest lagging behind my shoulders?"></label><button class="ghost wide" style="margin-top:6px" data-a="aiask">Ask</button>${ui.aiAns?`<p class="sm" style="white-space:pre-wrap;margin-top:8px">${esc(ui.aiAns)}</p>`:""}`:""}
+  <p class="mut sm" style="margin-top:8px">New photos are analysed automatically. Free tier: your photos are processed by Google and may be used to improve its products.</p></section>`}
 async function phPlay(){const pose=ui.php||"front",L=phs().filter(p=>p.pose===pose);if(L.length<2)return;sheet(`<h2>▶ ${POSES.find(p=>p[0]===pose)[1]} timelapse</h2><div class="phcmp one"><img id="tlimg" alt="Timelapse frame"></div><p style="text-align:center;margin:8px 0"><b id="tld"></b></p>`);
   const U=[];for(const p of L)U.push([await phURL(p.id),p.d,p]);let i=0;const im=document.getElementById("tlimg"),dl=document.getElementById("tld");const step=()=>{if(!document.getElementById("tlimg"))return;const[u,d,pp]=U[i%U.length];if(u){im.src=u;im.style.transform=tfT(pp.tf)}dl.textContent=nice(d)+(i%U.length===U.length-1?" · now":"");i++;setTimeout(step,i%U.length===0?1600:700)};step()}
 async function phShare(){const pose=ui.php||"front",D=phDates(pose);let a=ui.pha&&D.includes(ui.pha)?ui.pha:D[0],b=ui.phb&&D.includes(ui.phb)?ui.phb:D[D.length-1];if(a>b)[a,b]=[b,a];
@@ -1275,6 +1337,10 @@ document.addEventListener("click",e=>{
   else if(a==="camflip"){ui.camF=ui.camF==="user"?"environment":"user";phCam()}
   else if(a==="camsnap")camSnap();
   else if(a==="phplay")phPlay();
+  else if(a==="gemsave"){const k=((document.getElementById("gemk")||{}).value||"").trim();if(!k)return;try{localStorage.setItem("trk-gem",k);localStorage.removeItem("trk-gem-m")}catch(e){}toast("Key saved on this phone","good");render();if(phs().length)aiAnalyze()}
+  else if(a==="gemclr"){try{localStorage.removeItem("trk-gem");localStorage.removeItem("trk-gem-m")}catch(e){}render()}
+  else if(a==="aigo")aiAnalyze();
+  else if(a==="aiask"){const q=((document.getElementById("aiq")||{}).value||"").trim();if(q)aiAsk(q)}
   else if(a==="phmode"){ui.phm=b.dataset.k;render()}
   else if(a==="phalign"){const pose=ui.php||"front",D=phDates(pose);let x=ui.pha&&D.includes(ui.pha)?ui.pha:D[0],y=ui.phb&&D.includes(ui.phb)?ui.phb:D[D.length-1];if(x>y)[x,y]=[y,x];const P=phOf(pose,b.dataset.w==="a"?x:y),R=phOf(pose,b.dataset.w==="a"?y:x);if(P)phAlign(P,R)}
   else if(a==="phalreset"){if(ui.al){ui.al.x=ui.al.y=0;ui.al.s=1;const z=document.getElementById("phz");if(z)z.value=100;ui.alap&&ui.alap()}}
@@ -1381,7 +1447,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-21j";
+const BUILD="2026-11-21k";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
