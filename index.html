@@ -990,24 +990,32 @@ function phAlign(p,ref){ui.al={id:p.id,x:0,y:0,s:1,...(p.tf||{})};
   const end=()=>st=null;el.addEventListener("pointerup",end);el.addEventListener("pointercancel",end);
   document.getElementById("phz").addEventListener("input",e=>{ui.al.s=+e.target.value/100;ap()});ui.alap=ap}
 const GK=()=>{try{return localStorage.getItem("trk-gem")||""}catch(e){return""}};
-async function gemModel(key){try{const c=localStorage.getItem("trk-gem-m");if(c)return c}catch(e){}
-  const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key="+encodeURIComponent(key));if(!r.ok)throw new Error(r.status===400||r.status===403?"key":"net");
-  const J=await r.json(),M=(J.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/","")).filter(n=>/gemini/.test(n)&&!/(embed|tts|image|audio|live|lite|thinking-exp|learnlm|nano)/.test(n));
-  const score=n=>{const v=parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/)||[])[1]||0);return v*10+(/flash/.test(n)?3:0)+(/pro/.test(n)?1:0)-(/preview|exp/.test(n)?0.5:0)-(/\d{3}$/.test(n)?0.2:0)};
-  const m=M.sort((a,b)=>score(b)-score(a))[0];if(!m)throw new Error("nomodel");try{localStorage.setItem("trk-gem-m",m)}catch(e){}return m}
-async function gemCall(parts,json){const key=GK();if(!key)throw new Error("nokey");const m=await gemModel(key);
-  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{role:"user",parts}],generationConfig:{temperature:.4,...(json?{responseMimeType:"application/json"}:{})}})});
-  if(r.status===429)throw new Error("rate");if(r.status===404){try{localStorage.removeItem("trk-gem-m")}catch(e){}throw new Error("model")}if(!r.ok)throw new Error(r.status===400||r.status===403?"key":"net");
-  const J=await r.json(),t=((((J.candidates||[])[0]||{}).content||{}).parts||[]).map(p=>p.text||"").join("");if(!t)throw new Error("empty");return t}
+const GT=()=>{try{return localStorage.getItem("trk-gem-t")||"flash"}catch(e){return"flash"}};
+async function gfetch(url,body,ms){const key=GK(),ac=new AbortController(),to=setTimeout(()=>ac.abort(),ms||120000);
+  try{const r=await fetch(url,{method:body?"POST":"GET",headers:{"x-goog-api-key":key,...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined,signal:ac.signal});
+    if(!r.ok){let m="";try{const J=await r.json();m=(J.error&&J.error.message)||""}catch(e){}const er=new Error(r.status===429?"rate":r.status===404?"model":"http");er.st=r.status;er.gm=m;throw er}return await r.json()}
+  catch(e){if(e.name==="AbortError"){const er=new Error("timeout");throw er}if(e.message==="Failed to fetch"||e instanceof TypeError){const er=new Error("net");er.gm=String(e.message||e);throw er}throw e}finally{clearTimeout(to)}}
+async function gemModel(tier){const ck="trk-gem-m-"+tier;try{const c=localStorage.getItem(ck);if(c)return c}catch(e){}
+  const J=await gfetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200",null,30000),M=(J.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/","")).filter(n=>/^gemini-\d/.test(n)&&!/(embed|tts|image|audio|live|lite|exp|learnlm|nano|robotics|computer)/.test(n));
+  const ver=n=>parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/)||[])[1]||0),score=n=>ver(n)*10+(n.includes(tier)?5:0)-(/preview/.test(n)?0.5:0)-(/-\d{2,}/.test(n.replace(/gemini-\d+(\.\d+)?/,""))?0.2:0);
+  const m=M.filter(n=>n.includes(tier)).sort((a,b)=>score(b)-score(a))[0]||M.sort((a,b)=>score(b)-score(a))[0];if(!m)throw new Error("nomodel");try{localStorage.setItem(ck,m)}catch(e){}return m}
+async function gemCall(parts,json){if(!GK())throw new Error("nokey");let tier=GT();
+  for(let attempt=0;attempt<2;attempt++){const m=await gemModel(tier);aiStep(`Asking Gemini (${m})…`);
+    try{const J=await gfetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`,{contents:[{role:"user",parts}],generationConfig:{temperature:.4,...(json?{responseMimeType:"application/json"}:{})}});
+      const t=((((J.candidates||[])[0]||{}).content||{}).parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");if(!t){const er=new Error("http");er.gm="Gemini returned an empty answer ("+(((J.candidates||[])[0]||{}).finishReason||(J.promptFeedback||{}).blockReason||"no reason")+").";throw er}return t}
+    catch(e){if(e.message==="model"){try{localStorage.removeItem("trk-gem-m-"+tier)}catch(_){}}
+      if(attempt===0&&tier==="pro"&&(e.message==="rate"||e.message==="model"||(e.st===400&&/quota|billing|free/i.test(e.gm||"")))){tier="flash";aiStep("Pro isn't available on the free tier right now, switching to Flash…");continue}throw e}}}
+function aiStep(t){ui.aiStepT=t;const el=document.getElementById("aistep");if(el)el.textContent="⏳ "+t}
 async function img64(id,max=640){const u=await phURL(id);if(!u)return null;const im=new Image();im.src=u;await im.decode();const s=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.82).split(",")[1]}
 const AIA=[["leanness","Leanness"],["shoulders","Shoulders"],["arms","Arms"],["chest","Chest"],["back","Back"],["core","Core / waist"]];
 let aiBusy=0,aiTimer=null;
 function aiSoon(){if(!GK())return;clearTimeout(aiTimer);aiTimer=setTimeout(()=>aiAnalyze(),2500)}
-function aiErr(e){const m=e&&e.message;return m==="nokey"?"Add your Gemini key first.":m==="key"?"Google rejected the key. Check it in the AI coach settings.":m==="rate"?"Gemini's free limit was hit. Try again in a minute.":m==="model"?"Model changed on Google's side; tap Analyze again.":"Couldn't reach Gemini. Check your connection and try again."}
+function aiErr(e){const m=e&&e.message,g=e&&e.gm?` Google says: "${String(e.gm).slice(0,180)}"`:"";ui.aiLastErr=(e&&e.st?"HTTP "+e.st+". ":"")+(e&&e.gm||m||"");
+  return m==="nokey"?"Add your Gemini key first.":m==="rate"?"Gemini's free limit was hit. Wait a minute, or switch the model to Flash."+g:m==="model"?"That model isn't available to your key. Tap Analyze again."+g:m==="timeout"?"Gemini took too long. Tap Analyze to try again.":m==="net"?"Couldn't connect to Google. Check your internet."+g:m==="nomodel"?"Your key has no Gemini models enabled.":(e&&e.st===400||e&&e.st===401||e&&e.st===403)?"Google rejected the request (HTTP "+e.st+")."+g:"Something went wrong ("+(e&&e.st?"HTTP "+e.st:m)+")."+g}
 async function aiAnalyze(){if(aiBusy)return;const dates=[...new Set(phs().map(p=>p.d))];if(!dates.length)return;aiBusy=1;render();
   try{const cur=dates[dates.length-1],base=dates[0],prev=dates.length>2?dates[dates.length-2]:null,want=[];
     const add=(d,tag)=>{for(const[p,l] of POSES){const x=phOf(p,d);if(x)want.push([x,`${tag} · ${l} · ${nice(d)}`])}};add(cur,"CURRENT");if(base!==cur)add(base,"BASELINE");if(prev&&prev!==base)add(prev,"PREVIOUS");
-    const parts=[],labels=[];for(const[x,l] of want){const b=await img64(x.id);if(b){labels.push(l);parts.push({inline_data:{mime_type:"image/jpeg",data:b}})}}
+    const parts=[],labels=[];let pi=0;for(const[x,l] of want){aiStep(`Preparing photo ${++pi} of ${want.length}…`);const b=await img64(x.id,560);if(b){labels.push(l);parts.push({inline_data:{mime_type:"image/jpeg",data:b}})}}
     const R=(state.coach||{}).reports||[],last=R[R.length-1],S=state.settings;
     const body=dates.map(d=>{const w=nearBody(d,"w",4),wa=nearBody(d,"waist",4),bf=nearBody(d,"pbf",7);return(w||wa||bf)?`${d}: ${w?w+" kg":""} ${wa?"waist "+wa+" cm":""} ${bf!=null?"scan BF "+bf+"%":""}`:null}).filter(Boolean).join("\n")||"none";
     const lifts=topLifts().map(n=>{const a=bestE1(n,base),b=bestE1(n,cur);return a&&b?`${n}: est. 1RM ${Math.round(a)} → ${Math.round(b)} kg`:null}).filter(Boolean).join("; ")||"not enough data";
@@ -1038,16 +1046,16 @@ function aiCard(){const key=GK(),R=(state.coach||{}).reports||[],last=R[R.length
   const li=(t,a)=>a&&a.length?`<p style="margin:10px 0 2px"><b>${t}</b></p><ul style="margin:0;padding-left:20px">${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:"";
   if(!key)return`<section class="card"><h2>🧠 AI coach</h2><p class="sm">Get a real photo analysis that updates every time you add photos. It runs on Google Gemini's free tier.</p>
   <ol class="guide sm"><li>Open <b>aistudio.google.com/apikey</b> and sign in with your Google account.</li><li>Tap <b>Create API key</b> and copy it.</li><li>Paste it here. It stays on this phone only.</li></ol>
-  <label class="f">Gemini API key<input id="gemk" type="password" autocomplete="off" placeholder="AIza…"></label><button class="pri wide" style="margin-top:8px" data-a="gemsave">Save key</button>
+  <label class="f">Gemini API key<input id="gemk" type="password" autocomplete="off" placeholder="Paste your key"></label><button class="pri wide" style="margin-top:8px" data-a="gemsave">Save key</button>
   <p class="mut sm" style="margin-top:8px">Privacy: on Google's free tier, what you send (your photos) may be used by Google to improve its products and can be seen by human reviewers. Turning on billing in Google Cloud stops that.</p></section>`;
   return`<section class="card"><div class="exh"><h2 style="margin:0">🧠 AI coach</h2>${last?`<span class="tag">${short(last.d)}</span>`:""}</div>
-  ${aiBusy?`<p class="sm" style="margin:10px 0">⏳ Coach is studying your photos…</p>`:""}
+  ${aiBusy?`<p class="sm" id="aistep" style="margin:10px 0">⏳ ${esc(ui.aiStepT||"Starting…")}</p>`:""}${!aiBusy&&ui.aiLastErr?`<p class="mut sm" style="margin:8px 0;word-break:break-word">Last error: ${esc(ui.aiLastErr)}</p>`:""}
   ${last?`<div style="display:flex;gap:16px;align-items:center;margin:12px 0"><div style="font-weight:800;font-size:54px;line-height:1;color:var(--acc,#ff5a1f);white-space:nowrap">${s.overall??"–"}<span style="font-size:16px;color:var(--mut,#888)">/10</span></div><div class="sm">${esc(last.r.summary)}<div class="mut" style="margin-top:4px">Est. body fat ${esc(last.r.bf_range||"–")}</div></div></div>
   ${AIA.map(([k,l])=>{const v=s[k],dd=ps[k]!=null&&v!=null?v-ps[k]:null;return`<div style="display:grid;grid-template-columns:7em minmax(0,1fr) 3.2em;gap:10px;align-items:center;margin:6px 0" class="sm"><span>${l}</span><span style="height:9px;border-radius:9px;background:var(--soft);overflow:hidden"><i style="display:block;height:100%;width:${(v||0)*10}%;background:var(--acc,#ff5a1f);border-radius:9px"></i></span><span style="text-align:right">${v??"–"}${dd?` <b class="${dd>0?"ok":"bad"}">${dd>0?"+":""}${dd}</b>`:""}</span></div>`}).join("")}
   ${li("Since last check-in",last.r.since_previous)}${li("Since day one",last.r.since_baseline)}${li("Strengths",last.r.strengths)}${li("Lagging",last.r.lagging)}${li("Training focus",last.r.training_focus)}${li("Nutrition focus",last.r.nutrition_focus)}${li("Better photos next time",last.r.photo_tips)}
   ${R.length>1?`<p class="sm" style="margin-top:12px"><b>Overall score over time:</b> ${R.map(x=>`${short(x.d)} <b>${(x.r.scores||{}).overall??"–"}</b>`).join(" → ")}</p>`:""}
   <p class="mut sm">Visual estimate from photos by Gemini, not a measurement.</p>`:`<p class="sm">Ready to analyse your ${phs().length} photos.</p>`}
-  <div class="two" style="margin-top:8px"><button class="${last?"ghost":"pri"}" data-a="aigo" ${aiBusy?"disabled":""}>${last?"↻ Re-analyze":"Analyze my progress"}</button><button class="ghost" data-a="gemclr">Remove key</button></div>
+  <div class="seg" style="margin:10px 0 6px"><button data-a="gemtier" data-k="flash" class="${GT()==="flash"?"on":""}">⚡ Flash</button><button data-a="gemtier" data-k="pro" class="${GT()==="pro"?"on":""}">🧠 Pro</button></div><p class="mut sm" style="margin:0 0 8px">${GT()==="pro"?"Pro is smarter but slower, and its free limit is small. If it's refused, the coach falls back to Flash.":"Flash is fast and has a generous free limit."}</p><div class="two" style="margin-top:8px"><button class="${last?"ghost":"pri"}" data-a="aigo" ${aiBusy?"disabled":""}>${last?"↻ Re-analyze":"Analyze"}</button><button class="ghost" data-a="gemclr">Remove key</button></div>
   ${last?`<label class="f" style="margin-top:12px">Ask the coach<input id="aiq" placeholder="Is my chest lagging behind my shoulders?"></label><button class="ghost wide" style="margin-top:6px" data-a="aiask">Ask</button>${ui.aiAns?`<p class="sm" style="white-space:pre-wrap;margin-top:8px">${esc(ui.aiAns)}</p>`:""}`:""}
   <p class="mut sm" style="margin-top:8px">New photos are analysed automatically. Free tier: your photos are processed by Google and may be used to improve its products.</p></section>`}
 async function phPlay(){const pose=ui.php||"front",L=phs().filter(p=>p.pose===pose);if(L.length<2)return;sheet(`<h2>▶ ${POSES.find(p=>p[0]===pose)[1]} timelapse</h2><div class="phcmp one"><img id="tlimg" alt="Timelapse frame"></div><p style="text-align:center;margin:8px 0"><b id="tld"></b></p>`);
@@ -1337,9 +1345,10 @@ document.addEventListener("click",e=>{
   else if(a==="camflip"){ui.camF=ui.camF==="user"?"environment":"user";phCam()}
   else if(a==="camsnap")camSnap();
   else if(a==="phplay")phPlay();
-  else if(a==="gemsave"){const k=((document.getElementById("gemk")||{}).value||"").trim();if(!k)return;try{localStorage.setItem("trk-gem",k);localStorage.removeItem("trk-gem-m")}catch(e){}toast("Key saved on this phone","good");render();if(phs().length)aiAnalyze()}
-  else if(a==="gemclr"){try{localStorage.removeItem("trk-gem");localStorage.removeItem("trk-gem-m")}catch(e){}render()}
-  else if(a==="aigo")aiAnalyze();
+  else if(a==="gemsave"){const k=((document.getElementById("gemk")||{}).value||"").trim();if(!k)return;try{localStorage.setItem("trk-gem",k);localStorage.removeItem("trk-gem-m-flash");localStorage.removeItem("trk-gem-m-pro")}catch(e){}toast("Key saved on this phone","good");render();if(phs().length)aiAnalyze()}
+  else if(a==="gemclr"){try{localStorage.removeItem("trk-gem");localStorage.removeItem("trk-gem-m-flash");localStorage.removeItem("trk-gem-m-pro")}catch(e){}render()}
+  else if(a==="aigo"){ui.aiLastErr="";aiAnalyze()}
+  else if(a==="gemtier"){try{localStorage.setItem("trk-gem-t",b.dataset.k)}catch(e){}render()}
   else if(a==="aiask"){const q=((document.getElementById("aiq")||{}).value||"").trim();if(q)aiAsk(q)}
   else if(a==="phmode"){ui.phm=b.dataset.k;render()}
   else if(a==="phalign"){const pose=ui.php||"front",D=phDates(pose);let x=ui.pha&&D.includes(ui.pha)?ui.pha:D[0],y=ui.phb&&D.includes(ui.phb)?ui.phb:D[D.length-1];if(x>y)[x,y]=[y,x];const P=phOf(pose,b.dataset.w==="a"?x:y),R=phOf(pose,b.dataset.w==="a"?y:x);if(P)phAlign(P,R)}
@@ -1447,7 +1456,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-21k";
+const BUILD="2026-11-21l";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
