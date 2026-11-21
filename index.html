@@ -89,7 +89,8 @@ main.enter .arc{animation:ringin 1.1s .15s cubic-bezier(.2,.8,.2,1) both}
 .toast.good{background:var(--grn);color:#fff}.toast.gold{background:linear-gradient(135deg,#e0a200,#d7262e);color:#fff;font-size:16px}.toast.warn{background:#7a5a00;color:#fff}
 .conf{position:fixed;left:50%;top:38%;z-index:30;pointer-events:none}.conf i{position:absolute;width:8px;height:13px;border-radius:2px;animation:conf 1.3s cubic-bezier(.1,.7,.3,1) forwards}
 #rest{position:fixed;left:10px;right:10px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:15;display:flex;align-items:center;gap:10px;background:var(--rub);color:#fff;border-radius:16px;padding:8px 8px 8px 14px;box-shadow:0 10px 30px rgb(0 0 0/.35);transform:translateY(140%);transition:transform .35s cubic-bezier(.2,.8,.2,1);max-width:560px;margin:0 auto}
-#rest.show{transform:none}#rest .rt{display:grid;line-height:1.05}#rest .rt b{font:700 26px "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums}#rest .rbar{flex:1;height:6px;background:#33363d;border-radius:9px;overflow:hidden}#rest .rbar i{display:block;height:100%;background:var(--red);transition:width .25s linear}#rest button{min-height:38px;background:#2b2e35;color:#fff;border-color:#3a3e46;padding:0 10px}
+#rest.show{transform:none}
+#rest:not(.show){transform:translateY(calc(100% + 160px));visibility:hidden;pointer-events:none;transition:transform .35s cubic-bezier(.2,.8,.2,1),visibility 0s .35s}#rest .rt{display:grid;line-height:1.05}#rest .rt b{font:700 26px "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums}#rest .rbar{flex:1;height:6px;background:#33363d;border-radius:9px;overflow:hidden}#rest .rbar i{display:block;height:100%;background:var(--red);transition:width .25s linear}#rest button{min-height:38px;background:#2b2e35;color:#fff;border-color:#3a3e46;padding:0 10px}
 .mbr{display:grid;grid-template-columns:minmax(0,1fr) 92px 40px;gap:8px;align-items:end;margin-bottom:8px}.mbr .ghost{padding:0}
 .mbt{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:var(--soft);border-radius:12px;padding:10px;margin-top:8px;text-align:center}.mbt div{display:grid}.mbt .num{font-size:24px}
 h3.cat{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:16px 0 2px}
@@ -1192,7 +1193,7 @@ document.addEventListener("click",e=>{
   else if(a==="wmr"){ui.wmr=Math.max(1,(+ui.wmr||0)+parseInt(b.dataset.d,10));renderWM()}
   else if(a==="wmset"){const L=wmList(),[n,tg]=L[Math.min(ui.wm.i,L.length-1)];logSet(n,+ui.wmw||0,+ui.wmr||1,tg);const ns=ui.newSet;commit();ui.newSet=ns;const W=curW(),d=W.ex.find(e=>norm(e.n)===norm(n));if(d.sets.length>=rangeOf(tg).n&&ui.wm.i<L.length-1){ui.wm.i++;ui.wmw=null;toast(`✓ ${esc(n)} done. Next: ${esc(L[ui.wm.i][0])}`,"good")}renderWM();ui.newSet=null;startRest()}
   else if(a==="wmnav"){const L=wmList(),d=+b.dataset.d;if(ui.wm.i+d>=L.length){ui.wm.sum=1;ui.restEnd=0;const rr=document.getElementById("rest");if(rr)rr.classList.remove("show");checkAch();commit();confetti()}else ui.wm.i=Math.max(0,ui.wm.i+d);ui.wmw=null;renderWM()}
-  else if(a==="wmfin"){ui.wm.sum=1;ui.restEnd=0;const rr=document.getElementById("rest");if(rr)rr.classList.remove("show");commit();confetti();renderWM()}
+  else if(a==="wmfin"){ui.wm.sum=1;ui.restEnd=0;clearInterval(restI);const rr=document.getElementById("rest");if(rr)rr.classList.remove("show");commit();confetti();renderWM()}
   else if(a==="owedit"){ui.owEdit=1;render();window.scrollTo(0,0)}
   else if(a==="owdone"){ui.owEdit=0;ui.enter=1;render()}
   else if(a==="owmv"){const S=state.settings;let o=(S.ow&&S.ow.length?[...S.ow]:Object.keys(OW));for(const k of Object.keys(OW))if(!o.includes(k))o.push(k);const i=o.indexOf(b.dataset.k),j=i+ +b.dataset.d;if(j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];S.ow=o;commit()}
@@ -1257,6 +1258,6 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-21b";
+const BUILD="2026-11-21c";
 (function(){if(location.protocol!=="https:"||window.claude)return;const k="trk-upd";fetch(location.pathname+"?u="+Date.now(),{cache:"reload"}).then(r=>r.text()).then(t=>{const m=t.match(/const BUILD="([^"]+)"/);if(m&&m[1]!==BUILD&&sessionStorage.getItem(k)!==m[1]){sessionStorage.setItem(k,m[1]);fetch(location.pathname,{cache:"reload"}).finally(()=>{try{toast("✨ Updating to the newest version…","good")}catch(e){}setTimeout(()=>location.reload(),700)})}}).catch(()=>{})})();
 </script></body></html>
