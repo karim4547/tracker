@@ -202,7 +202,7 @@ const SESS={0:"legs",1:"shoulders-arms",2:"chest-back-arms",6:"chest-back"};
 const DAYN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const CH={fw:"Weight forecast",fp:"Body fat % forecast",fs:"Muscle forecast",ff:"Fat mass forecast",hw:"Weight history",hs:"Muscle history",hp:"Body fat % history",mw:"Waist",msh:"Shoulders",mc:"Chest",ma:"Arm",mt:"Thigh",mr:"Shoulder-to-waist ratio",nk:"Calories per day",np:"Protein per day",ts:"Workouts per week",tv:"Sets per week",tm:"Sets per muscle",lift:"Strength trend",pr:"Recent records",md:"Macro split",wd:"Calories by weekday",tf:"Top foods",tl:"Weight lifted per week"};
 const MEAS=[["waist","Waist","mw"],["sh","Shoulders","msh"],["chest","Chest","mc"],["arm","Arm (flexed)","ma"],["thigh","Thigh","mt"]];
-function defaults(){const S=state.settings,d={gBf:15,gSmm:32,gW:0,gWaist:0,gRatio:1.6,mg:0.08,basis:"plan",planDays:4,fIn:"log",fH:16,rng:30,rw:12,name:"Karim's Tracker",rLo:8,rHi:12,incD:2.5,incM:2.5,incB:2.5,rest:120,fx:1,snd:1,anim:1,psub:"overview",water:3,sleep:7.5,steps:8000};for(const k in d)if(S[k]==null)S[k]=d[k];if(!Array.isArray(S.hide))S.hide=[];if(!state.wk)state.wk={...SESS};if(!Array.isArray(state.ing))state.ing=ING0.map(a=>({id:uid(),cat:a[0],n:a[1],k:a[2],p:a[3],c:a[4],f:a[5]}));if((state.ingv||0)<2&&typeof ingUpgrade==="function")try{ingUpgrade()}catch(e){}}
+function defaults(){const S=state.settings,d={gBf:15,gSmm:32,gW:0,gWaist:0,gRatio:1.6,mg:0.08,basis:"plan",planDays:4,fIn:"log",fH:16,rng:30,rw:12,name:"Karim's Tracker",rLo:8,rHi:12,incD:2.5,incM:2.5,incB:2.5,gym:"uni",dbU:"2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40",dbO:"2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 30, 35, 40, 45, 50",rest:120,fx:1,snd:1,anim:1,psub:"overview",water:3,sleep:7.5,steps:8000};for(const k in d)if(S[k]==null)S[k]=d[k];if(!Array.isArray(S.hide))S.hide=[];if(!state.wk)state.wk={...SESS};if(!Array.isArray(state.ing))state.ing=ING0.map(a=>({id:uid(),cat:a[0],n:a[1],k:a[2],p:a[3],c:a[4],f:a[5]}));if((state.ingv||0)<2&&typeof ingUpgrade==="function")try{ingUpgrade()}catch(e){}}
 const CATS=["Carbs","Protein","Fats & oils","Veg","Dairy & cheese","Sauces","Spreads & sweeteners","Other"];
 const ING0=[["Carbs","White rice (cooked)",130,2.7,28.2,0.3],["Carbs","Rice with vermicelli (cooked, no fat)",136,3.3,28.7,0.4],["Carbs","Basmati rice (cooked)",121,3.5,25.2,0.4],["Carbs","Pasta (cooked)",158,5.8,30.9,0.9],["Carbs","Potato (boiled)",87,1.9,20.1,0.1],["Carbs","Potato (baked / air-fried, no oil)",93,2.5,21.2,0.1],["Carbs","Sweet potato (baked)",90,2,20.7,0.2],["Carbs","Oats (dry)",389,16.9,66.3,6.9],["Carbs","Baladi bread",250,9,52,1.2],["Carbs","Tortilla wrap",241,6.4,41,5.6],["Carbs","Lentils (cooked)",116,9,20.1,0.4],["Carbs","Bulgur (cooked)",83,3.1,18.6,0.2],["Carbs","Freekeh (cooked)",125,4.8,25,0.9],
 ["Protein","Chicken breast (cooked)",165,31,0,3.6],["Protein","Chicken breast (raw)",120,22.5,0,2.6],["Protein","Chicken thigh, skinless (cooked)",209,26,0,10.9],["Protein","Beef tenderloin (cooked)",210,28,0,10],["Protein","Ground beef 80/20 (cooked)",254,25.8,0,17],["Protein","Ground beef 90/10 (cooked)",217,26.9,0,11.6],["Protein","Ground beef 80/20 (raw)",254,17.2,0,20],["Protein","Eggs, whole",143,12.6,0.7,9.5],["Protein","Tuna in water (drained)",116,25.5,0,0.8],["Protein","Salmon (cooked)",206,22,0,12.4],["Protein","Tilapia (cooked)",128,26,0,2.7],["Protein","Shrimp (cooked)",99,24,0.2,0.3],["Protein","Turkey breast (cooked)",147,30,0,2],["Protein","Veal escalope, lean (cooked)",150,28.1,0,3.4],["Protein","Veal escalope, lean (raw)",107,20.1,0,2.3],
@@ -505,20 +505,26 @@ function lastFor(n,d){const W=state.workouts.filter(w=>w.d<d).sort((a,b)=>b.d.lo
 const setsTxt=S=>S.map(s=>`${s[0]?s[0]:"BW"}×${s[1]}`).join(", ");
 const e1=(w,r)=>w>0?w*(1+r/30):0;
 function rangeOf(tg){const S=state.settings,s=String(tg||"");let m=s.match(/(\d+)\s*[×x]\s*(\d+)\s*[–-]\s*(\d+)/);if(m)return{n:+m[1],lo:+m[2],hi:+m[3]};m=s.match(/(\d+)\s*[×x]\s*(\d+)/);if(m)return{n:+m[1],lo:+m[2],hi:+m[2]+2};m=s.match(/(\d+)\s*[–-]\s*(\d+)/);if(m)return{n:3,lo:+m[1],hi:+m[2]};return{n:3,lo:S.rLo,hi:S.rHi}}
+const GYMS={uni:"🏫 Uni gym",other:"🏋️ Other gym"};
+const isDB=n=>/dumbbell|\bdb\b|hammer|lateral|incline curl|arnold|kickback|goblet/i.test(n)&&!/cable|machine|smith|band/i.test(n);
+function dbs(){const S=state.settings;return String(S.gym==="other"?S.dbO:S.dbU).split(/[,\s]+/).map(Number).filter(x=>x>0).sort((a,b)=>a-b)}
+function dbNext(w,dir){const L=dbs();if(!L.length)return Math.max(0,w+dir*state.settings.incD);return dir>0?(L.find(x=>x>w+0.01)??L[L.length-1]):([...L].reverse().find(x=>x<w-0.01)??L[0])}
+function dbNear(w){const L=dbs();if(!L.length||L.some(x=>Math.abs(x-w)<0.01))return w;return L.reduce((a,x)=>Math.abs(x-w)<Math.abs(a-w)-0.01?x:a,L[0])}
 function incOf(n){const S=state.settings;n=n.toLowerCase();if(/dumbbell|\bdb\b|hammer|lateral|incline curl|arnold|kickback|goblet/.test(n))return S.incD;if(/cable|machine|pulldown|pushdown|push-down|pec deck|leg press|leg ext|leg curl|smith|face pull|rope/.test(n))return S.incM;return S.incB}
 function histOf(n,before){return state.workouts.filter(w=>w.d<before).sort((a,b)=>b.d.localeCompare(a.d)).map(w=>{const e=w.ex.find(x=>norm(x.n)===norm(n)&&x.sets.length);return e?{d:w.d,sets:e.sets}:null}).filter(Boolean)}
 function bestOf(n,skipD,skipJ){let b={e:0,w:0,r:0};for(const W of state.workouts){const e=W.ex.find(x=>norm(x.n)===norm(n));if(!e)continue;e.sets.forEach((s,j)=>{if(W.d===skipD&&j>=skipJ)return;const v=e1(s[0],s[1]);if(v>b.e)b.e=v;if(s[0]>b.w)b.w=s[0];if(!s[0]&&s[1]>b.r)b.r=s[1]})}return b}
 const wsOf=sets=>{const top=Math.max(...sets.map(s=>s[0]));return{top,reps:sets.filter(s=>s[0]===top).map(s=>s[1])}};
 function coach(n,tg,H){
-  const R=rangeOf(tg),inc=incOf(n),last=H[0];
+  const R=rangeOf(tg),inc=incOf(n),last=H[0],db=isDB(n);
   if(!last)return{k:"start",w:null,reps:Array(R.n).fill(R.lo),R,head:"First time",why:`Pick a weight you can lift ${R.lo}–${R.hi} times with 1–2 reps left in the tank. That sets your baseline.`};
-  const{top,reps}=wsOf(last.sets),T=i=>reps[i]??reps[reps.length-1],bw=top===0,best=Math.max(...reps);
+  const{top,reps}=wsOf(last.sets),T=i=>reps[i]??reps[reps.length-1],bw=top===0,best=Math.max(...reps),upW=db?dbNext(top,1):top+inc,dnW=db?dbNext(top,-1):Math.max(0,top-inc);
   let o;
-  if(reps.length>=Math.min(R.n,2)&&reps.every(r=>r>=R.hi))o=bw?{k:"up",w:0,reps:Array(R.n).fill(R.hi),head:"Make it harder",why:`You did ${R.hi}+ on every set. Add weight (hold a dumbbell or use a dip belt), or lower slowly for 3 seconds.`}:{k:"up",w:top+inc,reps:Array(R.n).fill(R.lo),head:`Go up to ${top+inc} kg`,why:`You hit ${R.hi}+ reps on every set at ${top} kg. Add ${inc} kg and aim for at least ${R.lo} reps. Fewer reps at the new weight is normal.`};
-  else if(!bw&&best<R.lo-2)o={k:"down",w:Math.max(0,top-inc),reps:Array(R.n).fill(R.lo),head:`Drop to ${Math.max(0,top-inc)} kg`,why:`${top} kg only got ${best} reps, well under ${R.lo}. Go lighter, own ${R.lo}+ clean reps, then build back up.`};
+  if(reps.length>=Math.min(R.n,2)&&reps.every(r=>r>=R.hi))o=bw?{k:"up",w:0,reps:Array(R.n).fill(R.hi),head:"Make it harder",why:`You did ${R.hi}+ on every set. Add weight (hold a dumbbell or use a dip belt), or lower slowly for 3 seconds.`}:{k:"up",w:upW,reps:Array(R.n).fill(R.lo),head:`Go up to ${upW} kg`,why:`You hit ${R.hi}+ reps on every set at ${top} kg. Add ${r1(upW-top)} kg${db&&upW-top>state.settings.incD+0.01?` (the next dumbbell at this gym)`:""} and aim for at least ${R.lo} reps. Fewer reps at the new weight is normal.`};
+  else if(!bw&&best<R.lo-2)o={k:"down",w:dnW,reps:Array(R.n).fill(R.lo),head:`Drop to ${dnW} kg`,why:`${top} kg only got ${best} reps, well under ${R.lo}. Go lighter, own ${R.lo}+ clean reps, then build back up.`};
   else if(reps.some(r=>r<R.lo))o={k:"hold",w:top,reps:Array.from({length:R.n},(_,i)=>Math.min(R.hi,T(i)+1)),head:`Stay at ${kgs(top)}`,why:`Not every set reached ${R.lo} reps yet. Keep the weight and add a rep where you can.`};
   else o={k:"reps",w:top,reps:Array.from({length:R.n},(_,i)=>Math.min(R.hi,T(i)+1)),head:`${kgs(top)}, +1 rep`,why:`Beat last time by one rep per set. Once every set hits ${R.hi}, the weight goes up.`};
   if(H.length>=3){const a=wsOf(H[0].sets),b=wsOf(H[1].sets),c=wsOf(H[2].sets),sum=x=>x.reps.reduce((p,q)=>p+q,0);if(a.top===b.top&&b.top===c.top&&sum(a)<=sum(b)&&sum(b)<=sum(c))o.why+=` You've been stuck for 3 sessions: sleep and eat enough, add one set, or drop 10% and build back up.`}
+  if(db&&o.w>0&&(o.k==="hold"||o.k==="reps")){const nw=dbNear(o.w);if(nw!==o.w){o.why=`There's no ${kgs(o.w)} dumbbell at this gym, so use ${kgs(nw)}${nw<o.w?" and push for an extra rep":" and expect a rep or two fewer"}. `+o.why;o.head=`Use ${kgs(nw)} today`;o.w=nw}}
   return{...o,R,last}
 }
 let toastT=null;
@@ -591,6 +597,7 @@ function vGym(){
   const pct=planned?Math.min(100,vol/planned*100):0;
   return `${dnav()}
   <section class="card"><div class="exh"><h2 style="margin:0">${esc(P.name)}</h2><select id="sess" aria-label="Session" style="width:auto">${opts}</select></div>
+    ${key!=="rest"?`<div class="seg" style="margin:10px 0 2px">${Object.entries(GYMS).map(([k,l])=>`<button data-a="gymset" data-k="${k}" class="${(state.settings.gym||"uni")===k?"on":""}">${l}</button>`).join("")}</div><p class="mut sm" style="margin:2px 0 8px">Dumbbells here: ${(()=>{const L=dbs();return L.length?`${kgs(L[0])}–${kgs(L[L.length-1])}`:"not set"})()}. The coach only suggests weights this gym has.</p>`:""}
     ${all.length&&key!=="rest"?`<button class="pri wmstart" data-a="wmstart">▶ ${vol?"Continue":"Start"} workout mode</button>`:""}
     ${all.length?`<div class="gprog"><div class="bar"><i style="width:${pct}%;background:var(--red)"></i></div><span class="sm"><b>${vol}</b>/${planned} sets · ${doneEx}/${all.length} exercises · ${fmt(ton)} kg lifted</span></div>`:""}
     ${cards||`<p class="mut">${key==="rest"?"Rest day. Recovery is when muscle grows.":"Pick a session or add an exercise."}</p>`}
@@ -651,7 +658,7 @@ function vCustom(){
   ${sel("mg","Muscle gain rate",[[0.05,"Cautious, ~0.2 kg a month"],[0.08,"Typical, ~0.35 kg a month"],[0.12,"Optimistic, ~0.5 kg a month"]])}
   ${sel("fH","Forecast length",[[8,"8 weeks"],[12,"12 weeks"],[16,"16 weeks"],[26,"6 months"],[52,"1 year"]])}</div>
   <p class="mut sm">Muscle gain rates are for skeletal muscle on InBody, with gains slowing over time. "Typical" fits someone fairly new to consistent lifting who eats enough protein.</p></details>
-  <details class="card" data-d="Gym coaching" ${ui.op["Gym coaching"]?"open":""}><summary><h2>Gym coaching</h2></summary><div class="two">
+  <details class="card" data-d="Gym coaching" ${ui.op["Gym coaching"]?"open":""}><summary><h2>Gym coaching</h2></summary><label class="f">🏫 Uni gym dumbbells (kg)<input data-ss="dbU" value="${esc(S.dbU)}" inputmode="decimal"></label><label class="f">🏋️ Other gym dumbbells (kg)<input data-ss="dbO" value="${esc(S.dbO)}" inputmode="decimal"></label><p class="mut sm" style="margin-top:0">List every dumbbell weight the gym has, separated by commas. Switch gyms at the top of the Gym tab.</p><div class="two">
   ${sel("rLo","Default reps: low",[[5,"5"],[6,"6"],[8,"8"],[10,"10"],[12,"12"]])}${sel("rHi","Default reps: high",[[8,"8"],[10,"10"],[12,"12"],[15,"15"],[20,"20"]])}
   ${sel("incD","Dumbbell jump",[[1,"1 kg"],[2,"2 kg"],[2.5,"2.5 kg"],[5,"5 kg"]])}${sel("incM","Cable / machine jump",[[1.25,"1.25 kg"],[2.5,"2.5 kg"],[5,"5 kg"]])}
   ${sel("incB","Barbell / other jump",[[1.25,"1.25 kg"],[2.5,"2.5 kg"],[5,"5 kg"]])}${sel("rest","Rest timer",[[0,"Off"],[60,"1:00"],[90,"1:30"],[120,"2:00"],[150,"2:30"],[180,"3:00"]])}</div>
@@ -1189,7 +1196,8 @@ document.addEventListener("click",e=>{
   else if(a==="wrw"){ui.wr.off=Math.max(0,ui.wr.off+ +b.dataset.d);ui.wr.i=0;renderWrap()}
   else if(a==="wmstart"){openWM()}
   else if(a==="wmx"){closeWM()}
-  else if(a==="wmw"){ui.wmw=Math.max(0,r1((+ui.wmw||0)+parseFloat(b.dataset.d)));renderWM()}
+  else if(a==="wmw"){const L=wmList(),cn=(L[Math.min(ui.wm.i,L.length-1)]||[""])[0],d=parseFloat(b.dataset.d);ui.wmw=isDB(cn)?dbNext(+ui.wmw||0,Math.sign(d)):Math.max(0,r1((+ui.wmw||0)+d));renderWM()}
+  else if(a==="gymset"){state.settings.gym=b.dataset.k;commit();toast(`${GYMS[b.dataset.k]}: dumbbell weights updated`,"good")}
   else if(a==="wmr"){ui.wmr=Math.max(1,(+ui.wmr||0)+parseInt(b.dataset.d,10));renderWM()}
   else if(a==="wmset"){const L=wmList(),[n,tg]=L[Math.min(ui.wm.i,L.length-1)];logSet(n,+ui.wmw||0,+ui.wmr||1,tg);const ns=ui.newSet;commit();ui.newSet=ns;const W=curW(),d=W.ex.find(e=>norm(e.n)===norm(n));if(d.sets.length>=rangeOf(tg).n&&ui.wm.i<L.length-1){ui.wm.i++;ui.wmw=null;toast(`✓ ${esc(n)} done. Next: ${esc(L[ui.wm.i][0])}`,"good")}renderWM();ui.newSet=null;startRest()}
   else if(a==="wmnav"){const L=wmList(),d=+b.dataset.d;if(ui.wm.i+d>=L.length){ui.wm.sum=1;ui.restEnd=0;const rr=document.getElementById("rest");if(rr)rr.classList.remove("show");checkAch();commit();confetti()}else ui.wm.i=Math.max(0,ui.wm.i+d);ui.wmw=null;renderWM()}
@@ -1258,6 +1266,6 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-21c";
+const BUILD="2026-11-21d";
 (function(){if(location.protocol!=="https:"||window.claude)return;const k="trk-upd";fetch(location.pathname+"?u="+Date.now(),{cache:"reload"}).then(r=>r.text()).then(t=>{const m=t.match(/const BUILD="([^"]+)"/);if(m&&m[1]!==BUILD&&sessionStorage.getItem(k)!==m[1]){sessionStorage.setItem(k,m[1]);fetch(location.pathname,{cache:"reload"}).finally(()=>{try{toast("✨ Updating to the newest version…","good")}catch(e){}setTimeout(()=>location.reload(),700)})}}).catch(()=>{})})();
 </script></body></html>
