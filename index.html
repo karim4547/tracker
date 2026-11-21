@@ -536,9 +536,9 @@ function startRest(){if(!state.settings.rest)return;ui.restEnd=Date.now()+state.
 function tickRest(){let el=document.getElementById("rest");const left=Math.ceil(((ui.restEnd||0)-Date.now())/1000);if(left<=0){if(el){el.classList.remove("show");if(ui.restEnd){toast("⏱ Rest's over. Next set!","good");try{navigator.vibrate&&navigator.vibrate([150,80,150])}catch(e){}}}ui.restEnd=0;clearInterval(restI);return}
   if(!el){el=document.createElement("div");el.id="rest";el.innerHTML=`<div class="rt"><b id="rtn"></b><span class="mut sm">rest</span></div><div class="rbar"><i id="rtb"></i></div><button data-a="rest15">+15 s</button><button data-a="restx">Skip</button>`;document.body.appendChild(el)}
   el.classList.add("show");document.getElementById("rtn").textContent=Math.floor(left/60)+":"+z(left%60);document.getElementById("rtb").style.width=(left/state.settings.rest*100)+"%"}
-function logSet(n,w,r,tg){const W=ensureW();if(!W.t0)W.t0=Date.now();let ex=W.ex.find(x=>norm(x.n)===norm(n));if(!ex){ex={n,sets:[]};W.ex.push(ex)}const C=coach(ex.n,tg||"",histOf(ex.n,ui.date));const pr=react(ex.n,w,r,ex.sets.length,C);ex.sets.push([w,r]);ui.newSet=ex.n+"|"+(ex.sets.length-1);W.t1=Date.now();sfx("set");return C}
+function logSet(n,w,r,tg){const W=ensureW();if(!W.t0)W.t0=Date.now();let ex=W.ex.find(x=>norm(x.n)===norm(n));if(!ex){ex={n,sets:[]};W.ex.push(ex)}const C=coach(ex.n,tg||"",histOf(ex.n,ui.date));const pr=react(ex.n,w,r,ex.sets.length,C);ex.sets.push([w,r]);ui.newSet=ex.n+"|"+(ex.sets.length-1);W.t1=Date.now();if(W.ex.reduce((a,e)=>a+e.sets.length,0)===1&&(!W.t0||W.t1-W.t0>15*6e4))W.t0=W.t1-3*6e4;sfx("set");return C}
 function wmList(){const key=sessKey(),P=state.plan[key]||{ex:[]},PX=exFor(P,ui.date),W=curW(),names=PX.map(e=>e[0]),extra=W?W.ex.map(e=>e.n).filter(n=>!names.some(x=>norm(x)===norm(n))):[];return[...PX.map(e=>[e[0],e[1]]),...extra.map(n=>[n,""])]}
-function openWM(){if(!wmList().length){toast("Add an exercise first","warn");return}ui.wm={i:0,st:Date.now()};const L=wmList(),W=curW();const k=L.findIndex(([n,tg])=>{const d=W&&W.ex.find(e=>norm(e.n)===norm(n));return!d||d.sets.length<rangeOf(tg).n});ui.wm.i=Math.max(0,k);const W2=ensureW();if(!W2.t0)W2.t0=Date.now();ui.wmw=null;ui.wmr=null;renderWM()}
+function openWM(){if(!wmList().length){toast("Add an exercise first","warn");return}ui.wm={i:0,st:Date.now()};const L=wmList(),W=curW();const k=L.findIndex(([n,tg])=>{const d=W&&W.ex.find(e=>norm(e.n)===norm(n));return!d||d.sets.length<rangeOf(tg).n});ui.wm.i=Math.max(0,k);const W2=ensureW();if(!W2.t0||!W2.ex.some(e=>e.sets.length))W2.t0=Date.now();ui.wmw=null;ui.wmr=null;renderWM()}
 function closeWM(){const o=document.getElementById("wm");if(o){o.classList.remove("show");setTimeout(()=>o.remove(),300)}ui.wm=null;document.body.style.overflow="";render()}
 function renderWM(){
   let o=document.getElementById("wm");if(!o){o=document.createElement("div");o.id="wm";document.body.appendChild(o);requestAnimationFrame(()=>o.classList.add("show"))}document.body.style.overflow="hidden";
@@ -1257,6 +1257,6 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-21a";
+const BUILD="2026-11-21b";
 (function(){if(location.protocol!=="https:"||window.claude)return;const k="trk-upd";fetch(location.pathname+"?u="+Date.now(),{cache:"reload"}).then(r=>r.text()).then(t=>{const m=t.match(/const BUILD="([^"]+)"/);if(m&&m[1]!==BUILD&&sessionStorage.getItem(k)!==m[1]){sessionStorage.setItem(k,m[1]);fetch(location.pathname,{cache:"reload"}).finally(()=>{try{toast("✨ Updating to the newest version…","good")}catch(e){}setTimeout(()=>location.reload(),700)})}}).catch(()=>{})})();
 </script></body></html>
