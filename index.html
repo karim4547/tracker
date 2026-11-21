@@ -316,19 +316,27 @@ function vBuilder(){
 function mbEntry(){const t=mbTot();if(!t.g)return null;const ing=mbRows().filter(r=>ingOf(r.id)&&parseFloat(r.g)).map(r=>{const q=[ingOf(r.id).n,parseFloat(r.g),isProt(r)&&PREPN[r.pr]?r.pr:""];if(hasFat(r)&&ingOf(r.fid)&&fatG(r))q.push(ingOf(r.fid).n,r.fa===""||r.fa==null?1:parseFloat(r.fa),r.fu||"tbsp");else if(!q[2])q.pop();return q});return{n:(ui.mb.name||"").trim()||mbName(),k:r1(t.k),p:r1(t.p),c:r1(t.c),f:r1(t.f),ing,g:t.g}}
 const habD=()=>{state.hab=state.hab||{};return state.hab[ui.date]||{}};
 function setHab(k,v){state.hab=state.hab||{};const h=state.hab[ui.date]=state.hab[ui.date]||{};h[k]=Math.max(0,v);commit()}
-const HKF=[["steps","Steps"],["active","Active energy (kcal)"],["basal","Resting energy (kcal)"],["exmin","Exercise minutes"],["rhr","Resting heart rate"],["hrv","Heart rate variability (ms)"],["weight","Weight (kg)"],["hr","Heart rate"],["vo2","VO2 max"],["whr","Walking heart rate"],["resp","Respiratory rate"],["dist","Distance (km)"],["flights","Flights climbed"]];
+const HKF=[["steps","Steps"],["active","Active energy (kcal)"],["basal","Resting energy (kcal)"],["exmin","Exercise minutes"],["rhr","Resting heart rate"],["hrv","Heart rate variability (ms)"],["weight","Weight (kg)"],["hr","Heart rate"],["vo2","VO2 max"],["whr","Walking heart rate"],["resp","Respiratory rate"],["dist","Distance (km)"],["flights","Flights climbed"],["sleep","Sleep"],["core","Core sleep"],["deep","Deep sleep"],["rem","REM sleep"],["awake","Awake"],["spo2","Blood oxygen"],["temp","Wrist temperature"],["stand","Stand minutes"],["daylight","Time in daylight"],["noise","Noise exposure"],["hrrec","Cardio recovery"],["wspeed","Walking speed"]];
+const HKD=["sleep","core","deep","rem","awake"];
+function durMin(t){t=String(t||"");let m=0,u=0;const h=t.match(/(\d+(?:[.,]\d+)?)\s*(?:h|hr|hrs|hour|hours)\b/i),mi=t.match(/(\d+(?:[.,]\d+)?)\s*(?:m|min|mins|minute|minutes)\b/i),se=t.match(/(\d+(?:[.,]\d+)?)\s*(?:s|sec|secs|second|seconds)\b/i),c=t.match(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/);
+  if(h){m+=parseFloat(h[1].replace(",","."))*60;u=1}if(mi){m+=parseFloat(mi[1].replace(",","."));u=1}if(se){m+=parseFloat(se[1].replace(",","."))/60;u=1}if(!u&&c){m=+c[1]*60+ +c[2]+(c[3]?+c[3]/60:0);u=1}return u?m:null}
+const hmS=m=>m==null?"–":`${Math.floor(m/60)}h ${z(Math.round(m%60))}m`;
 function numOf(v){v=String(v||"").replace(/,(?=\d{3}\b)/g,"").replace(",",".");const m=v.match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null}
-function parseHK(txt){if(!/TRK/i.test(txt||""))return null;const o={},V={};let cur=null;
+function parseHK(txt){if(!/TRK/i.test(txt||""))return null;const o={},V={},U={};let cur=null;
   for(const raw of txt.split(/\n|;|\|/)){const line=raw.trim();if(!line||/^TRK$/i.test(line))continue;const m=line.match(/^([a-z][a-z0-9]*)\s*[:=]\s*(.*)$/i);
     if(m&&!(m[1].toLowerCase()==="date"||HKF.some(f=>f[0]===m[1].toLowerCase()))){cur=null;continue}
-    if(m){cur=m[1].toLowerCase();if(cur==="date"){const d=m[2].match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(d)o.date=`${d[1]}-${z(+d[2])}-${z(+d[3])}`;cur=null;continue}V[cur]=V[cur]||[];if(m[2].trim()){const n=numOf(m[2]);if(n!=null)V[cur].push(n)}continue}
-    if(cur){const n=numOf(line);if(n!=null)V[cur].push(n)}}
-  for(const k in V){const L=V[k];if(!L.length)continue;o[k]=["steps","active","basal","exmin","dist","flights"].includes(k)?L.reduce((a,b)=>a+b,0):["hrv","hr","resp","whr"].includes(k)?L.reduce((a,b)=>a+b,0)/L.length:k==="vo2"?Math.max(...L):L[0];if(k==="hr"){o.hrMax=Math.round(Math.max(...L));o.hrMin=Math.round(Math.min(...L));o.hr=Math.round(o.hr)}}
+    if(m){cur=m[1].toLowerCase();if(cur==="date"){const d=m[2].match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(d)o.date=`${d[1]}-${z(+d[2])}-${z(+d[3])}`;cur=null;continue}V[cur]=V[cur]||[];if(m[2].trim()){const dm=HKD.includes(cur)?durMin(m[2]):null;if(dm!=null){V[cur].push(dm);U[cur]=1}else{const n=numOf(m[2]);if(n!=null)V[cur].push(n)}}continue}
+    if(cur){const dm=HKD.includes(cur)?durMin(line):null;if(dm!=null){V[cur].push(dm);U[cur]=1;continue}const n=numOf(line);if(n!=null)V[cur].push(n)}}
+  for(const k in V){const L=V[k];if(!L.length)continue;if(HKD.includes(k)){let t=L.reduce((a,b)=>a+b,0);if(!U[k]){if(Math.max(...L)>240)t/=60;else if(k==="sleep"&&t<=24)t*=60}o[k]=Math.round(t);continue}
+    if(["stand","daylight"].includes(k)){o[k]=Math.round(L.reduce((a,b)=>a+b,0));continue}
+    if(["spo2","temp","noise","wspeed"].includes(k)){let a=L.reduce((x,y)=>x+y,0)/L.length;if(k==="spo2"&&a<=1)a*=100;o[k]=r1(a);continue}
+    if(k==="hrrec"){o[k]=Math.round(Math.max(...L));continue}
+    o[k]=["steps","active","basal","exmin","dist","flights"].includes(k)?L.reduce((a,b)=>a+b,0):["hrv","hr","resp","whr"].includes(k)?L.reduce((a,b)=>a+b,0)/L.length:k==="vo2"?Math.max(...L):L[0];if(k==="hr"){o.hrMax=Math.round(Math.max(...L));o.hrMin=Math.round(Math.min(...L));o.hr=Math.round(o.hr)}}
   if(o.dist!=null)o.dist=Math.round(o.dist*100)/100;if(o.resp!=null)o.resp=r1(o.resp);if(o.vo2!=null)o.vo2=r1(o.vo2);if(o.whr!=null)o.whr=Math.round(o.whr);
-  if(o.sleep!=null){if(o.sleep>1440)o.sleep/=3600;else if(o.sleep>24)o.sleep/=60;o.sleep=Math.round(o.sleep*4)/4}
+  if(o.sleep==null&&(o.core!=null||o.deep!=null||o.rem!=null))o.sleep=(o.core||0)+(o.deep||0)+(o.rem||0);if(o.sleep!=null)o.sleep=Math.round(o.sleep/60*100)/100;
   if(o.hrv!=null&&o.hrv<1)o.hrv*=1000;if(o.hrv!=null)o.hrv=Math.round(o.hrv);for(const k of["steps","active","basal","exmin"])if(o[k]!=null)o[k]=Math.round(o[k]);return Object.keys(o).filter(k=>k!=="date").length?o:null}
 function applyHK(o,quiet){const d=o.date||ymd(new Date());state.hk=state.hk||{};state.hk[d]={...(state.hk[d]||{}),...o,t:Date.now()};delete state.hk[d].date;
-  state.hab=state.hab||{};const h=state.hab[d]=state.hab[d]||{};if(o.steps!=null)h.st=o.steps;
+  state.hab=state.hab||{};const h=state.hab[d]=state.hab[d]||{};if(o.steps!=null)h.st=o.steps;if(o.sleep>=1&&(!h.s||h.sw)){h.s=Math.round(o.sleep*4)/4;h.sw=1}
   if(o.weight!=null&&o.weight>30){const e=state.body.find(x=>x.d===d);if(e){if(e.w==null)e.w=r1(o.weight)}else state.body.push({d,w:r1(o.weight)})}
   commit();const bits=[o.steps!=null&&fmt(o.steps)+" steps",o.active!=null&&fmt(o.active)+" active kcal",o.rhr!=null&&o.rhr+" bpm",o.hrv!=null&&fmt(o.hrv)+" ms HRV"].filter(Boolean);
   if(quiet)return bits;confetti();toast(`⌚ Synced from Apple Health${bits.length?": "+bits.slice(0,3).join(" · "):""}`,"good")}
@@ -354,6 +362,7 @@ function recovery(d){const h=hkD(d),S=state.settings,sl=((state.hab||{})[d]||{})
   if(h.hrv!=null&&bh){const z=(h.hrv-bh)/bh;sc+=Math.max(-25,Math.min(20,z*120));why.push(`HRV ${fmt(h.hrv)} ms (usual ${fmt(bh)})`)}else if(h.hrv!=null)why.push(`HRV ${fmt(h.hrv)} ms`);
   if(h.rhr!=null&&br){const z=(br-h.rhr)/br;sc+=Math.max(-25,Math.min(15,z*250));why.push(`resting HR ${fmt(h.rhr)} (usual ${fmt(br)})`)}else if(h.rhr!=null)why.push(`resting HR ${fmt(h.rhr)}`);
   if(sl){sc+=(Math.min(1.1,sl/S.sleep)-0.85)*60;why.push(`${sl} h sleep`)}
+  {const bt=hkBase("temp",d,14);if(h.temp!=null&&bt!=null&&h.temp-bt>0.4){sc-=Math.min(15,(h.temp-bt)*20);why.push(`wrist temp +${r1(h.temp-bt)}°`)}if(h.spo2!=null&&h.spo2<94){sc-=6;why.push(`blood O₂ ${h.spo2}%`)}if(h.deep!=null&&h.sleep){const dp=h.deep/(h.sleep*60);if(dp<0.1){sc-=4;why.push("little deep sleep")}}}
   sc=Math.round(Math.max(5,Math.min(100,sc)));const lv=sc>=75?["Ready to push","var(--grn)","Go for rep and weight increases today."]:sc>=55?["Normal","var(--yel)","Train as planned."]:["Take it easier","var(--red)","Keep the weights, skip extra sets, focus on form and sleep tonight."];
   return{sc,lv,why,base:!!(bh||br)}}
 function burnTD(S){const td=new Date();td.setHours(0,0,0,0);const v=[];for(let i=1;i<=14;i++){const x=new Date(td);x.setDate(x.getDate()-i);const h=hkD(ymd(x));if(h.active!=null&&h.basal!=null&&h.basal>800)v.push(h.active+h.basal)}
@@ -364,7 +373,7 @@ function vWatch(){const d=ui.date,h=hkD(d),R=recovery(d),has=Object.keys(h).leng
   const T=(ic,v,l)=>v==null?"":`<div class="wt"><span>${ic}</span><b>${v}</b><span class="mut sm">${l}</span></div>`;
   return `<section class="card watch"><div class="exh"><h2 style="margin:0">⌚ Apple Watch</h2>${hkBtns()}</div>
   ${R?`<div class="rec" style="--c:${R.lv[1]}"><div class="rsc"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="34" fill="none" stroke="var(--soft)" stroke-width="9"/><circle class="arc" cx="42" cy="42" r="34" fill="none" stroke="${R.lv[1]}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(213.6*R.sc/100).toFixed(1)} 213.6" transform="rotate(-90 42 42)"/><text x="42" y="49" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">${R.sc}</text></svg></div><div><div class="mut sm">Recovery</div><b class="big2" style="color:${R.lv[1]}">${R.lv[0]}</b><p class="sm">${R.lv[2]}</p><p class="mut sm">${R.why.join(" · ")}${R.base?"":" · baseline builds after 3 days of syncs"}</p></div></div>`:""}
-  <div class="wts">${T("👟",h.steps!=null?fmt(h.steps):null,"steps")}${T("🔥",h.active!=null?fmt(h.active):null,"active kcal")}${T("⚡",h.active!=null&&h.basal!=null?fmt(h.active+h.basal):null,"total burn")}${T("⏱",h.exmin,"exercise min")}${T("❤️",h.rhr,"resting bpm")}${T("📈",h.hrv!=null?fmt(h.hrv):null,"HRV ms")}</div>
+  <div class="wts">${T("👟",h.steps!=null?fmt(h.steps):null,"steps")}${T("🔥",h.active!=null?fmt(h.active):null,"active kcal")}${T("⚡",h.active!=null&&h.basal!=null?fmt(h.active+h.basal):null,"total burn")}${T("⏱",h.exmin,"exercise min")}${T("❤️",h.rhr,"resting bpm")}${T("📈",h.hrv!=null?fmt(h.hrv):null,"HRV ms")}${T("😴",h.sleep!=null?hmS(h.sleep*60):null,"asleep")}${T("🩸",h.spo2!=null?h.spo2+"%":null,"blood O₂")}${T("🧍",h.stand,"stand min")}${T("☀️",h.daylight,"daylight min")}</div>
   <button class="ghost wide" data-a="gowa">📊 Full Watch analysis →</button><p class="mut sm">Synced ${h.t?new Date(h.t).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):""}. ${gistId()?"Updates on its own from your Shortcut's schedule.":"Sync again later for updated numbers."}</p></section>`}
 function vHealthSet(){const S=state.settings;return `<details class="card" data-d="Apple Health" ${ui.op["Apple Health"]?"open":""}><summary><h2>⌚ Apple Health</h2></summary>
   <div class="tip"><b>✨ Auto-sync (no buttons):</b> your Shortcut uploads your Watch data to a private note on your GitHub on a schedule, and this app pulls it in every time you open it. ${gistId()?`<b class="ok">Connected ✓</b>`:"Set it up once after the basic Shortcut below works:"}</div>
@@ -390,8 +399,8 @@ function vHealthSet(){const S=state.settings;return `<details class="card" data-
    <li>Repeat 4–6 for <b>Active Energy</b> (<b>active:</b>), <b>Resting Energy</b> (<b>basal:</b>) and <b>Resting Heart Rate</b> (<b>rhr:</b>). Tip: long-press a block's actions → Duplicate, then just change the Type and the word.</li>
    <li>At the end add <b>Copy to Clipboard</b> and tap its input → <b>Out</b>. Done!</li>
    <li>Run it once and tap <b>Allow</b> for Health. Then come here and tap <b>Import</b>.</li></ol>
-  <p class="sm"><b>More Watch metrics (same 3-action pattern), for the Watch analysis:</b></p><ul class="guide"><li><b>hr:</b> Heart Rate, Start Date is today</li><li><b>exmin:</b> Exercise Minutes, today</li><li><b>dist:</b> Walking + Running Distance, today</li><li><b>flights:</b> Flights Climbed, today</li><li><b>whr:</b> Walking Heart Rate Average, last 1 day</li><li><b>vo2:</b> VO2 Max, last 30 days</li><li><b>resp:</b> Respiratory Rate, last 1 day</li></ul>
-  <p class="mut sm"> Sleep isn't synced: log your hours under Habits each morning and the coach uses them.</p>
+  <p class="sm"><b>More Watch metrics (same 3-action pattern), for the Watch analysis:</b></p><ul class="guide"><li><b>hr:</b> Heart Rate, Start Date is today</li><li><b>exmin:</b> Exercise Minutes, today</li><li><b>dist:</b> Walking + Running Distance, today</li><li><b>flights:</b> Flights Climbed, today</li><li><b>whr:</b> Walking Heart Rate Average, last 1 day</li><li><b>vo2:</b> VO2 Max, last 30 days</li><li><b>resp:</b> Respiratory Rate, last 1 day</li><li><b>spo2:</b> Blood Oxygen, last 1 day</li><li><b>temp:</b> Sleeping Wrist Temperature, last 1 day</li><li><b>stand:</b> Stand Time (Apple Stand Time), today</li><li><b>daylight:</b> Time in Daylight, today</li><li><b>noise:</b> Environmental Sound Levels, today</li><li><b>hrrec:</b> Cardio Recovery, last 7 days</li><li><b>wspeed:</b> Walking Speed, last 1 day</li></ul>
+  <p class="sm"><b>😴 Sleep stages</b> (the Watch must be worn to bed): add <b>Find Health Samples</b> → Type <b>Sleep Analysis</b> → filters <b>End Date is today</b> and <b>Value is Asleep Core</b>. Then add <b>Get Details of Health Samples</b> → <b>Duration</b>. Then the <b>Text</b> block <b>core:</b> + that Duration, and <b>Add to Variable</b> Out. Duplicate for <b>Asleep Deep</b> (<b>deep:</b>), <b>Asleep REM</b> (<b>rem:</b>) and <b>Awake</b> (<b>awake:</b>). The app adds them up and fills your sleep habit automatically.</p>
   <p class="sm">Then in this app tap <b>Import</b> on Today (iPhone shows a small "Paste" bubble; tap it). Missing lines are fine; it uses whatever is there.</p>
   <label class="f">Your Shortcut's exact name<input data-ss="scName" value="${esc(S.scName||"Sync Tracker")}" placeholder="Sync Tracker"></label><p class="mut sm">The ▶ Run &amp; Sync button opens this Shortcut, then brings you back. Tap "✓ Tap to finish sync" when you return.</p><div class="chips"><button class="pri" data-a="hkrun">▶ Run &amp; Sync</button><button data-a="hkimp">Import from clipboard</button></div>
   <label class="f" style="margin-top:10px">Or paste it here<textarea id="hkpaste" rows="4" placeholder="TRK&#10;steps: 8432&#10;sleep: 7.2 …"></textarea></label><button data-a="hkpaste">Import pasted text</button>
@@ -445,6 +454,7 @@ function vToday(){
   const S=state.settings,L=state.logs[ui.date]||[],t=tot(L),left=S.kMax-t.k,k=t.k||1;
   return `${dnav()}
   ${coachCard()}
+  ${aiRv("day")}
   ${questCard()}
   ${bossCard()}
   <section class="card hero">${ring(t.k,S)}<div>
@@ -613,13 +623,14 @@ function vGym(){
     <div class="addrow" style="margin-top:10px"><input id="newex" placeholder="Add another exercise" aria-label="Exercise name"><button data-a="addex">Add</button></div>
     <p class="mut sm">Green chip: beat last time · grey: matched · red: under. Bodyweight moves: log 0 kg.</p>
   </section>
+  ${aiRv("train")}
   <section class="card"><h2>History</h2>${hist.length?hist.map(w=>`<details><summary>${nice(w.d)} · ${esc((state.plan[w.s]||{name:w.s==="custom"?"Custom":w.s}).name)}</summary>${w.ex.map(e=>`<div class="row"><span class="grow">${esc(e.n)}</span><span class="r mut sm">${e.sets.length?setsTxt(e.sets):esc(e.note||"")}</span></div>`).join("")}</details>`).join(""):`<p class="mut">Past sessions show up here.</p>`}</section>`;
 }
 const SUBS={overview:"Overview",photos:"Photos",watch:"Watch",lifts:"Strength",awards:"Awards",training:"Training",forecast:"Forecast",body:"Body",shape:"Shape",food:"Food",habits:"Habits"};
 function vProgress(){
   const s=SUBS[ui.sub]?ui.sub:(SUBS[state.settings.psub]?state.settings.psub:"overview");
   const seg=`<div class="seg" role="tablist">${Object.entries(SUBS).map(([k,v])=>`<button data-a="sub" data-k="${k}" class="${k===s?"on":""}" role="tab" aria-selected="${k===s}">${v}</button>`).join("")}</div>`;
-  return seg+({overview:vOverview,forecast:vForecast,body:vBodyMain,shape:vShape,food:()=>vStats("food"),training:()=>vStats("training"),lifts:vLifts,awards:vAwards,habits:vHabitsP,watch:vWatchP,photos:vPhotos}[s])();
+  return seg+({overview:()=>aiRv("week")+vOverview(),forecast:vForecast,body:vBodyMain,shape:vShape,food:()=>aiRv("food")+vStats("food"),training:()=>aiRv("train")+vStats("training"),lifts:vLifts,awards:vAwards,habits:vHabitsP,watch:()=>aiRv("watch")+vWatchP(),photos:vPhotos}[s])();
 }
 const dsec=(k,title,body,open)=>`<details class="card" data-d="${k}" ${(ui.op&&ui.op[k]!=null?ui.op[k]:open)?"open":""}><summary><h2>${title}</h2></summary>${body}</details>`;
 function vBodyMain(){
@@ -1050,7 +1061,7 @@ function aiCard(){const key=GK(),R=(state.coach||{}).reports||[],last=R[R.length
   <p class="mut sm" style="margin-top:8px">Privacy: on Google's free tier, what you send (your photos) may be used by Google to improve its products and can be seen by human reviewers. Turning on billing in Google Cloud stops that.</p></section>`;
   return`<section class="card"><div class="exh"><h2 style="margin:0">🧠 AI coach</h2>${last?`<span class="tag">${short(last.d)}</span>`:""}</div>
   ${aiBusy?`<p class="sm" id="aistep" style="margin:10px 0">⏳ ${esc(ui.aiStepT||"Starting…")}</p>`:""}${!aiBusy&&ui.aiLastErr?`<p class="mut sm" style="margin:8px 0;word-break:break-word">Last error: ${esc(ui.aiLastErr)}</p>`:""}
-  ${last?`<div style="display:flex;gap:16px;align-items:center;margin:12px 0"><div style="font-weight:800;font-size:54px;line-height:1;color:var(--acc,#ff5a1f);white-space:nowrap">${s.overall??"–"}<span style="font-size:16px;color:var(--mut,#888)">/10</span></div><div class="sm">${esc(last.r.summary)}<div class="mut" style="margin-top:4px">Est. body fat ${esc(last.r.bf_range||"–")}</div></div></div>
+  ${last?`<div style="display:flex;gap:14px;align-items:flex-end;margin:12px 0 8px;flex-wrap:wrap"><div style="font-weight:800;font-size:54px;line-height:1;color:var(--acc,#ff5a1f);white-space:nowrap;flex:none">${s.overall??"–"}<span style="font-size:16px;color:var(--mut,#888)">/10</span></div><div class="mut sm" style="padding-bottom:6px">Overall<br>Est. body fat <b>${esc(last.r.bf_range||"–")}</b></div></div><p class="sm" style="margin:0 0 12px">${esc(last.r.summary)}</p>
   ${AIA.map(([k,l])=>{const v=s[k],dd=ps[k]!=null&&v!=null?v-ps[k]:null;return`<div style="display:grid;grid-template-columns:7em minmax(0,1fr) 3.2em;gap:10px;align-items:center;margin:6px 0" class="sm"><span>${l}</span><span style="height:9px;border-radius:9px;background:var(--soft);overflow:hidden"><i style="display:block;height:100%;width:${(v||0)*10}%;background:var(--acc,#ff5a1f);border-radius:9px"></i></span><span style="text-align:right">${v??"–"}${dd?` <b class="${dd>0?"ok":"bad"}">${dd>0?"+":""}${dd}</b>`:""}</span></div>`}).join("")}
   ${li("Since last check-in",last.r.since_previous)}${li("Since day one",last.r.since_baseline)}${li("Strengths",last.r.strengths)}${li("Lagging",last.r.lagging)}${li("Training focus",last.r.training_focus)}${li("Nutrition focus",last.r.nutrition_focus)}${li("Better photos next time",last.r.photo_tips)}
   ${R.length>1?`<p class="sm" style="margin-top:12px"><b>Overall score over time:</b> ${R.map(x=>`${short(x.d)} <b>${(x.r.scores||{}).overall??"–"}</b>`).join(" → ")}</p>`:""}
@@ -1058,6 +1069,44 @@ function aiCard(){const key=GK(),R=(state.coach||{}).reports||[],last=R[R.length
   <div class="seg" style="margin:10px 0 6px"><button data-a="gemtier" data-k="flash" class="${GT()==="flash"?"on":""}">⚡ Flash</button><button data-a="gemtier" data-k="pro" class="${GT()==="pro"?"on":""}">🧠 Pro</button></div><p class="mut sm" style="margin:0 0 8px">${GT()==="pro"?"Pro is smarter but slower, and its free limit is small. If it's refused, the coach falls back to Flash.":"Flash is fast and has a generous free limit."}</p><div class="two" style="margin-top:8px"><button class="${last?"ghost":"pri"}" data-a="aigo" ${aiBusy?"disabled":""}>${last?"↻ Re-analyze":"Analyze"}</button><button class="ghost" data-a="gemclr">Remove key</button></div>
   ${last?`<label class="f" style="margin-top:12px">Ask the coach<input id="aiq" placeholder="Is my chest lagging behind my shoulders?"></label><button class="ghost wide" style="margin-top:6px" data-a="aiask">Ask</button>${ui.aiAns?`<p class="sm" style="white-space:pre-wrap;margin-top:8px">${esc(ui.aiAns)}</p>`:""}`:""}
   <p class="mut sm" style="margin-top:8px">New photos are analysed automatically. Free tier: your photos are processed by Google and may be used to improve its products.</p></section>`}
+const RVK={day:["Today","Review TODAY so far for the time of day it is: food vs targets (what's left and exactly what to eat from his saved foods), today's training, recovery from Watch data and sleep. Next steps are for the rest of today."],
+ food:["Nutrition","Review his nutrition over the last 14 days: calorie adherence, protein, carb/fat balance, consistency, weekday vs weekend patterns, meal choices. Suggest concrete swaps using foods he actually eats. Next steps are for this week."],
+ train:["Training","Review his training over the last 4 weeks: progression on each main lift (look at weights x reps over time), stalls, weekly sets per muscle group, balance (push/pull, upper/lower), missed sessions. Next steps are specific changes for his next sessions (exercise, weight, reps)."],
+ watch:["Watch & recovery","Review his Apple Watch telemetry trends: resting HR, HRV, sleep and sleep stages, activity, steps, energy burn vs intake, blood oxygen, wrist temperature, and how they relate to his training and eating. Flag anything unusual. Next steps are for recovery and activity."],
+ week:["This week","Give an overall review of his week across everything: nutrition, training, body weight and measurements, Watch recovery, sleep, habits and photo-coach notes. Score how well the week moved him toward losing fat while building muscle."]};
+function aiCtx(){const S=state.settings,td=new Date(),D=n=>{const a=[];for(let i=n-1;i>=0;i--){const d=new Date(td);d.setDate(d.getDate()-i);a.push(ymd(d))}return a},o=[];
+  o.push(`ATHLETE: Karim, ${S.age||21}y male, Egyptian student. Goal: lose fat while building muscle (a cut with heavy training). Targets: ${S.kMin}-${S.kMax} kcal/day, protein ${S.protein} g/day, ${S.steps} steps/day, sleep ${S.sleep} h, water ${S.water} glasses.`);
+  o.push("PLAN: "+Object.values(state.plan).map(p=>`${p.name}: ${p.ex.map(e=>e[0]).join(", ")}`).join(" | "));
+  o.push("FOOD (last 14 days, kcal / protein / carbs / fat g):");for(const d of D(14)){const L=state.logs[d]||[];if(!L.length)continue;const t=tot(L);o.push(`${d}: ${fmt(t.k)} kcal, ${r1(t.p)}P ${fmt(t.c)}C ${fmt(t.f)}F`+(d>=D(3)[0]?` | items: ${L.map(e=>`${e.n}${e.q!==1?" x"+e.q:""} (${fmt(e.k*e.q)} kcal, ${r1(e.p*e.q)}P)`).join("; ")}`:""))}
+  o.push("WORKOUTS (last 28 days, kg x reps):");for(const w of state.workouts.filter(w=>w.d>=D(28)[0]).sort((a,b)=>a.d.localeCompare(b.d))){const ex=w.ex.filter(e=>e.sets.length);if(ex.length)o.push(`${w.d} ${(state.plan[w.s]||{name:w.s}).name}: ${ex.map(e=>`${e.n} ${setsTxt(e.sets)}`).join("; ")}`)}
+  o.push("APPLE WATCH (last 14 days; sleep in hours, sleep stages in minutes, energy in kcal):");for(const d of D(14)){const h=hkD(d),k=Object.keys(h).filter(x=>!["t","ct"].includes(x));if(k.length)o.push(`${d}: ${k.map(x=>x+"="+h[x]).join(", ")}`)}
+  o.push("HABITS (s=sleep h, w=water glasses, st=steps):");for(const d of D(14)){const h=(state.hab||{})[d];if(h&&Object.keys(h).length)o.push(`${d}: ${Object.entries(h).filter(([k])=>k!=="sw").map(([k,v])=>k+"="+v).join(", ")}`)}
+  o.push("BODY (weigh-ins, InBody, tape in cm):");for(const e of [...state.body].sort((a,b)=>a.d.localeCompare(b.d)).slice(-10))o.push(`${e.d}: ${Object.entries(e).filter(([k])=>k!=="d").map(([k,v])=>k+"="+v).join(", ")}`);
+  const R=(state.coach||{}).reports||[],l=R[R.length-1];if(l)o.push(`PHOTO COACH (${l.d}): overall ${(l.r.scores||{}).overall}/10, body fat ${l.r.bf_range}. ${l.r.summary}`);
+  return o.join("\n")}
+let rvBusy=null;const rvTried={};
+async function aiReview(kind,auto){if(rvBusy||aiBusy||!GK())return;const ctx=aiCtx(),h=hashS(kind+ctx);if(auto&&rvTried[kind]===h)return;rvTried[kind]=h;rvBusy=kind;ui.rvErr=ui.rvErr||{};delete ui.rvErr[kind];render();
+  const now=new Date(),pr=`You are an expert, honest strength and nutrition coach reviewing an athlete's own tracker data. It is ${now.toDateString()} ${now.toTimeString().slice(0,5)} (Cairo time). ${RVK[kind][1]}
+Be specific: quote his real numbers, dates, foods and lifts. Be direct; no generic advice, no medical diagnosis. Keep each list item under 22 words.
+Return JSON only: {"headline": short verdict under 12 words, "score": integer 1-10 for this area, "insight": 2-3 sentences with the single most important pattern you see, "wins": [up to 3], "fixes": [up to 3], "next": [up to 4 concrete actions]}.
+
+DATA:
+${ctx}`;
+  const keepE=ui.aiLastErr;
+  try{const t=await gemCall([{text:pr}],1);const r=JSON.parse(t.replace(/^```(json)?|```$/g,"").trim());state.coach=state.coach||{reports:[]};state.coach.rv=state.coach.rv||{};state.coach.rv[kind]={at:Date.now(),h,r};rvBusy=null;commit();if(!auto)sfx&&sfx("win")}
+  catch(e){const m=aiErr(e);ui.aiLastErr=keepE;ui.rvErr[kind]=m;rvBusy=null;render();if(!auto)toast(m,"warn")}}
+function aiRv(kind){const key=GK(),T=RVK[kind][0];
+  if(!key)return kind==="week"||kind==="day"?`<section class="card"><h2>🧠 AI review · ${T}</h2><p class="mut sm">Add your free Gemini key in Progress → Photos → AI coach, and every section gets its own AI review.</p></section>`:"";
+  const R=((state.coach||{}).rv||{})[kind],r=R&&R.r,h=hashS(kind+aiCtx()),stale=!R||(R.h!==h&&Date.now()-R.at>20*60000)||(kind==="day"&&ymd(new Date(R.at))!==ymd(new Date()));
+  if(stale&&!rvBusy&&!aiBusy&&rvTried[kind]!==h)setTimeout(()=>aiReview(kind,1),900);
+  const li=(t,a,c)=>a&&a.length?`<p class="sm" style="margin:10px 0 2px"><b>${t}</b></p><ul class="sm" style="margin:0;padding-left:20px">${a.map(x=>`<li${c?` class="${c}"`:""}>${esc(x)}</li>`).join("")}</ul>`:"";
+  const busy=rvBusy===kind,err=(ui.rvErr||{})[kind],sc=r&&+r.score,col=sc>=7?"var(--grn)":sc>=5?"var(--yel)":"var(--red)";
+  return`<section class="card"><div class="exh"><h2 style="margin:0">🧠 AI review · ${T}</h2>${r?`<span class="tag" style="color:${col};font-weight:800">${sc}/10</span>`:""}</div>
+  ${busy?`<p class="sm" style="margin:10px 0">⏳ Reading your data…</p>`:""}${!busy&&err?`<p class="mut sm" style="margin:8px 0">${esc(err)}</p>`:""}
+  ${r?`<p style="margin:10px 0 4px"><b>${esc(r.headline||"")}</b></p><p class="sm" style="margin:0">${esc(r.insight||"")}</p>${li("Do next",r.next)}
+   <details style="margin-top:8px"><summary class="sm">Wins and fixes</summary>${li("✅ Going well",r.wins)}${li("⚠️ Fix",r.fixes)}</details>
+   <div class="exh" style="margin-top:10px"><span class="mut sm">Updated ${new Date(R.at).toLocaleString("en-GB",{weekday:"short",hour:"2-digit",minute:"2-digit"})}${R.h!==h?" · new data since":""}</span><button class="ghost" data-a="rvgo" data-k="${kind}" ${busy?"disabled":""} style="min-height:34px;padding:4px 12px">↻ Refresh</button></div>`
+  :busy?"":`<button class="pri wide" style="margin-top:8px" data-a="rvgo" data-k="${kind}">Analyze</button>`}</section>`}
 async function phPlay(){const pose=ui.php||"front",L=phs().filter(p=>p.pose===pose);if(L.length<2)return;sheet(`<h2>▶ ${POSES.find(p=>p[0]===pose)[1]} timelapse</h2><div class="phcmp one"><img id="tlimg" alt="Timelapse frame"></div><p style="text-align:center;margin:8px 0"><b id="tld"></b></p>`);
   const U=[];for(const p of L)U.push([await phURL(p.id),p.d,p]);let i=0;const im=document.getElementById("tlimg"),dl=document.getElementById("tld");const step=()=>{if(!document.getElementById("tlimg"))return;const[u,d,pp]=U[i%U.length];if(u){im.src=u;im.style.transform=tfT(pp.tf)}dl.textContent=nice(d)+(i%U.length===U.length-1?" · now":"");i++;setTimeout(step,i%U.length===0?1600:700)};step()}
 async function phShare(){const pose=ui.php||"front",D=phDates(pose);let a=ui.pha&&D.includes(ui.pha)?ui.pha:D[0],b=ui.phb&&D.includes(ui.phb)?ui.phb:D[D.length-1];if(a>b)[a,b]=[b,a];
@@ -1127,6 +1176,17 @@ function vWatchP(){
   {const[xs,ys]=pairs(d=>(state.logs[d]||[]).length?tot(state.logs[d]).k:null,d=>K(d).hrv??null,1);const r=corr(xs,ys);if(r!=null&&r>0.35)ins.push(`🍽️ Your HRV tends to be higher after days you eat more. If recovery keeps dropping, a small refeed day (eating at maintenance) can help.`)}
   {const[xs,ys]=pairs(d=>K(d).steps??null,d=>K(d).active??null,0);const r=corr(xs,ys);if(r!=null&&xs.length>=5){const k=ys.reduce((a,y,i)=>a+y,0)/Math.max(1,xs.reduce((a,x)=>a+x,0));ins.push(`👟 Every 1,000 steps burns you about <b>${fmt(k*1000)} kcal</b> of active energy.`)}}
   out+=card("🧠 Insights",ins.length?ins.map(t=>`<div class="tip">${t}</div>`).join(""):`<p class="mut sm">🔒 Insights compare your sleep, training, eating and Watch data, so they need about a week of syncs. Keep syncing daily and logging sleep and food.</p>`);
+  {const SL=has.filter(d=>K(d).sleep!=null),ln=SL[SL.length-1];
+   if(SL.length){const h=K(ln),st=[["deep","Deep","#6366f1"],["core","Core","#3b82f6"],["rem","REM","#22d3ee"],["awake","Awake","#f59e0b"]].filter(x=>h[x[0]]!=null),tt=st.reduce((a,x)=>a+h[x[0]],0)||1;
+     G.wsl={unit:"h",line:S.sleep,vals:SL.slice(-14).map(d=>[lab(d),r1(K(d).sleep),K(d).sleep>=S.sleep?"var(--grn)":K(d).sleep>=S.sleep-1?"var(--yel)":"var(--red)"])};
+     const dp=h.deep!=null?h.deep/(h.sleep*60)*100:null,rp=h.rem!=null?h.rem/(h.sleep*60)*100:null,av=mean(SL.slice(-7).map(d=>K(d).sleep)),sdv=sd(SL.slice(-7).map(d=>K(d).sleep));
+     out+=card("😴 Sleep",`<div class="stats">${stat("Last night",hmS(h.sleep*60),short(ln))}${stat("7-day average",hmS(av*60),`goal ${S.sleep} h`,av>=S.sleep?"ok":"bad")}${dp!=null?stat("Deep",Math.round(dp)+"%",dp>=13?"healthy (13–23%)":"low (aim 13–23%)",dp>=13?"ok":"bad"):""}${rp!=null?stat("REM",Math.round(rp)+"%",rp>=18?"healthy (20–25%)":"low (aim 20–25%)",rp>=18?"ok":"bad"):""}</div>
+     ${st.length?`<div style="display:flex;height:16px;border-radius:9px;overflow:hidden;margin:8px 0">${st.map(x=>`<i style="width:${h[x[0]]/tt*100}%;background:${x[2]}"></i>`).join("")}</div><p class="sm">${st.map(x=>`<span style="color:${x[2]}">●</span> ${x[1]} ${hmS(h[x[0]])}`).join(" · ")}</p>`:`<p class="mut sm">Add the sleep-stage blocks in Settings → Apple Health to see deep, core and REM.</p>`}
+     <div class="fig short"><svg data-g="wsl" role="img" aria-label="Sleep per night"></svg></div><p class="sm">${SL.length>=4?(sdv>1?`Your sleep swings by about ${r1(sdv)} h night to night. A steady bedtime matters almost as much as total hours for recovery and fat loss.`:"Your sleep length is consistent. Keep the same bedtime."):"Sleep trends build up over a few nights."} Deep sleep is when most growth hormone is released, so it's the stage that matters most for muscle.</p>`)}}
+  {const h=K(T),Lx=has.slice(-7),av=k=>{const v=Lx.map(d=>K(d)[k]).filter(x=>x!=null);return v.length?mean(v):null},bt=hkBase("temp",T,14);
+   const sp=av("spo2"),tp=h.temp??av("temp"),ns=av("noise"),dl=av("daylight"),ws=av("wspeed"),hr=Math.max(...has.map(d=>K(d).hrrec||0))||null,sd2=av("stand");
+   if(sp!=null||tp!=null||ns!=null||dl!=null||ws!=null||hr||sd2!=null)out+=card("🩺 Vitals & lifestyle",`<div class="stats">${sp!=null?stat("Blood oxygen",r1(sp)+"%",sp>=95?"normal (95–100%)":"a bit low; check fit of the Watch",sp>=95?"ok":"bad"):""}${tp!=null?stat("Wrist temp",r1(tp)+"°",bt!=null?`${tp-bt>=0?"+":""}${r1(tp-bt)}° vs your usual`:"baseline builds over a week",bt!=null&&tp-bt>0.4?"bad":"mut"):""}${hr?stat("Cardio recovery",hr,"bpm drop in 1 min",hr>=20?"ok":hr<12?"bad":"mut"):""}${sd2!=null?stat("Standing",fmt(sd2),"min/day (7-day avg)"):""}${dl!=null?stat("Daylight",fmt(dl),"min/day",dl>=30?"ok":"bad"):""}${ns!=null?stat("Noise",fmt(ns)+" dB","average",ns>80?"bad":"mut"):""}${ws!=null?stat("Walking speed",r1(ws),"km/h"):""}</div>
+   <p class="sm">${[bt!=null&&tp-bt>0.4?"🌡️ Your wrist temperature is above your normal. That often comes before getting sick or after a very hard session, so go lighter and sleep more.":"",dl!=null&&dl<30?"☀️ Under 30 min of daylight a day. Morning light improves sleep quality and energy; a 10–15 min walk outside helps.":"",hr&&hr<12?"❤️ A small heart-rate drop after exercise means cardio fitness has room to grow.":hr>=20?"❤️ Strong heart-rate recovery: good cardio fitness.":"",ns!=null&&ns>80?"🔊 Average noise is high. Long exposure above 80 dB can harm hearing; lower the headphone volume.":""].filter(Boolean).join(" ")||"All in a healthy range."}</p>`)}
   return out+`<p class="mut sm" style="text-align:center">Add more Watch metrics in Settings → ⌚ Apple Health.</p>`;
 }
 function vHabitsP(){const S=state.settings,td=new Date();td.setHours(0,0,0,0);const days=[];for(let i=Math.min(S.rng,30)-1;i>=0;i--){const d=new Date(td);d.setDate(d.getDate()-i);days.push(ymd(d))}
@@ -1348,6 +1408,7 @@ document.addEventListener("click",e=>{
   else if(a==="gemsave"){const k=((document.getElementById("gemk")||{}).value||"").trim();if(!k)return;try{localStorage.setItem("trk-gem",k);localStorage.removeItem("trk-gem-m-flash");localStorage.removeItem("trk-gem-m-pro")}catch(e){}toast("Key saved on this phone","good");render();if(phs().length)aiAnalyze()}
   else if(a==="gemclr"){try{localStorage.removeItem("trk-gem");localStorage.removeItem("trk-gem-m-flash");localStorage.removeItem("trk-gem-m-pro")}catch(e){}render()}
   else if(a==="aigo"){ui.aiLastErr="";aiAnalyze()}
+  else if(a==="rvgo"){rvTried[b.dataset.k]=null;aiReview(b.dataset.k)}
   else if(a==="gemtier"){try{localStorage.setItem("trk-gem-t",b.dataset.k)}catch(e){}render()}
   else if(a==="aiask"){const q=((document.getElementById("aiq")||{}).value||"").trim();if(q)aiAsk(q)}
   else if(a==="phmode"){ui.phm=b.dataset.k;render()}
@@ -1456,7 +1517,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-21l";
+const BUILD="2026-11-21m";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
