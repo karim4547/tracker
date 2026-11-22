@@ -646,7 +646,7 @@ function vGym(){
     const chip=(s,j)=>{const l=ls(j);let cls="";if(l){cls=s[0]>l[0]||(s[0]===l[0]&&s[1]>l[1])?"up":s[0]===l[0]&&s[1]===l[1]?"eq":"dn"}else if(C.reps[j]&&s[1]>=C.reps[j])cls="up";const isPr=s[0]>0&&e1(s[0],s[1])>bestOf(n,ui.date,j).e+0.05&&bestOf(n,ui.date,j).e>0;return `<span class="chip ${cls} ${ui.newSet===n+"|"+j?"new":""}">${isPr&&!TM?"🏆 ":""}${TM?(s[0]?kgs(s[0])+" · ":"")+s[1]+" s":kgs(s[0])+" × "+s[1]}<button data-a="rmset" data-n="${esc(n)}" data-j="${j}" aria-label="Remove set">✕</button></span>`};
     const todo=Array.from({length:Math.max(0,C.R.n-ds.length)},(_,q)=>`<span class="chip ghostc">${isTimed(n,tg)?(C.reps[ds.length+q]??C.R.lo)+" s":(C.w!=null?kgs(C.w):"?")+" × "+(C.reps[ds.length+q]??C.R.lo)}</span>`).join("");
     const after=ds.length>=C.R.n?coach(n,tg,[{d:ui.date,sets:ds},...H]):null;
-    return `<div class="ex ${ds.length>=C.R.n?"exdone":""}"><div class="exh"><b>${ds.length>=C.R.n?"✓ ":""}${esc(n)}</b><span style="display:flex;gap:6px;align-items:center;flex:none">${px?`<button data-a="swap" data-o="${esc(px[2]||px[0])}" aria-label="Swap ${esc(n)} for an alternative" style="min-height:32px;padding:4px 10px;border-radius:10px;font-weight:700">⇄ Swap</button>`:""}<span class="tag">${TM?C.R.n+"×"+C.R.lo+" s":C.R.n+"×"+C.R.lo+"–"+C.R.hi}</span></span></div>${px&&px[2]?`<div class="mut sm" style="margin:-2px 0 6px">⇄ Instead of ${esc(px[2])} ${px[3]==="gym"?"at "+GYMS[state.settings.gym||"uni"]:"for today"}</div>`:""}
+    return `<div class="ex ${ds.length>=C.R.n?"exdone":""}"><div class="exh"><b>${ds.length>=C.R.n?"✓ ":""}${esc(n)}</b><span style="display:flex;gap:6px;align-items:center;flex:none">${px?`<button data-a="swap" data-o="${esc(px[2]||px[0])}" aria-label="Swap ${esc(n)} for an alternative" style="min-height:32px;padding:4px 10px;border-radius:10px;font-weight:700">⇄ Swap</button>`:`<button data-a="rmex" data-n="${esc(n)}" aria-label="Remove ${esc(n)}" style="min-height:32px;padding:4px 10px;border-radius:10px">✕</button>`}<span class="tag">${TM?C.R.n+"×"+C.R.lo+" s":C.R.n+"×"+C.R.lo+"–"+C.R.hi}</span></span></div>${px&&px[2]?`<div class="mut sm" style="margin:-2px 0 6px">⇄ Instead of ${esc(px[2])} ${px[3]==="gym"?"at "+GYMS[state.settings.gym||"uni"]:"for today"}</div>`:""}
     <div class="coach ${C.k}"><b>${C.head}</b><span>${C.why}</span>${C.last?`<span class="mut">Last (${short(C.last.d)}): ${setsTxt(C.last.sets)}</span>`:""}</div>
     <div class="chips">${ds.map(chip).join("")}${todo}</div>
     ${after?`<p class="sm"><b>Done.</b> Next time: ${after.head.toLowerCase()}.</p>`:""}
@@ -1500,6 +1500,8 @@ document.addEventListener("click",e=>{
   else if(a==="set"){const i=b.dataset.i,w=parseFloat(document.getElementById("w"+i).value)||0,r=parseInt(document.getElementById("r"+i).value,10);if(!r){document.getElementById("r"+i).focus();return}logSet(b.dataset.n,w,r,b.dataset.tg);commit();startRest()}
   else if(a==="rmset"){const W=curW(),ex=W&&W.ex.find(x=>norm(x.n)===norm(b.dataset.n));if(ex){ex.sets.splice(+b.dataset.j,1);commit()}}
   else if(a==="exr"){ui.exr=b.dataset.k;ui.libOpen=1;document.querySelectorAll(".libg").forEach(g=>g.hidden=g.dataset.r!==ui.exr);document.querySelectorAll('[data-a="exr"]').forEach(x=>x.className=x.dataset.k===ui.exr?"pri":"ghost");const q=document.getElementById("exq");if(q)q.value=""}
+  else if(a==="rmex"){const W=curW(),n=b.dataset.n,o=W&&W.ex.find(x=>norm(x.n)===norm(n));if(!o)return;const at=W.ex.indexOf(o);W.ex.splice(at,1);ui.lastRm={o,at,d:ui.date};commit();toast(`Removed ${esc(n)}${o.sets.length?` and its ${o.sets.length} set${o.sets.length>1?"s":""}`:""}`,"",["undorm","Undo"])}
+  else if(a==="undorm"){const R=ui.lastRm;if(!R)return;const W=state.workouts.find(w=>w.d===R.d)||ensureW();W.ex.splice(Math.min(R.at,W.ex.length),0,R.o);ui.lastRm=null;commit()}
   else if(a==="libadd"){const n=b.dataset.n,W=ensureW(),o=W.ex.find(x=>norm(x.n)===norm(n));ui.libOpen=1;if(o){if(o.sets.length){toast(`${esc(n)} already has sets logged`,"warn");return}W.ex.splice(W.ex.indexOf(o),1);toast(`Removed ${esc(n)}`)}else{W.ex.push({n,sets:[],tg:b.dataset.tg});toast(`Added ${esc(n)} · ${esc(b.dataset.tg)}`,"good")}const y=window.scrollY;commit();requestAnimationFrame(()=>window.scrollTo(0,y))}
   else if(a==="addex"){let n=document.getElementById("newex").value.trim(),tg="";if(!n)return;const mm=n.match(/^(.*?)[\s,-]+(\d+)\s*[x×*]\s*(\d+)\s*(s|sec|secs|seconds|reps?)?$/i);if(mm&&mm[1].trim()){n=mm[1].trim();tg=`${mm[2]}×${mm[3]}${mm[4]&&/^s/i.test(mm[4])?" s":""}`}const W=ensureW();const o=W.ex.find(x=>norm(x.n)===norm(n));if(!o)W.ex.push({n,sets:[],tg});else if(tg)o.tg=tg;commit()}
   else if(a==="bossd")bossSheet();
@@ -1630,7 +1632,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22f";
+const BUILD="2026-11-22g";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
