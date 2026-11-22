@@ -1849,6 +1849,13 @@ try{state.seeded=state.seeded||[];if(!state.seeded.includes("tira1123")){const R
   const c=S.find(x=>x.n==="Cocoa powder");
   const x=(P.x||[]).find(z=>/Check at home/.test(z.n));if(x)x.n="Check at home: coffee/espresso, vanilla, salt, pepper, cooking spray, baking paper";
   state.seeded.push("tira1123");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("mince1123")){const R=state.recipes||[],S=state.stock||[];
+  const A=R.find(x=>/Basterma & cheddar egg bake/.test(x.n));
+  if(A)Object.assign(A,{n:"Spiced mince, potato & cheddar egg bake",items:[{n:"Eggs, whole",g:495},{n:"Ground beef 80/20 (raw)",g:250},{n:"Cheddar",g:80},{n:"Potato (boiled)",g:160}],
+    steps:"Egyptian eggs with mince, baked with cheddar on top.\n\n1. Oven to 180°C. Line a dish with baking paper and spread the thawed potatoes in it.\n2. Brown the mince in a dry pan for 6–7 min with salt, black pepper, 1 tsp cumin, 1 tsp paprika and 2 crushed garlic cloves. Tip away the fat that comes out; that cuts a lot of the calories.\n3. Scatter the mince over the potatoes. Whisk 9 eggs with a pinch of salt and pour over. Cover with the cheddar.\n4. Bake 25–30 min, until the middle is just set. Cut into 4. Fridge, 4 days."});
+  const b=S.findIndex(x=>x.n==="Basterma"&&!(x.q>0));if(b>=0)S.splice(b,1);
+  if(!S.some(x=>norm(x.n)==="ground beef"))S.push({id:uid(),n:"Ground beef",q:500,u:"g",low:"",cat:"🥩 Protein",store:"",note:"regular mince (not lean)"});
+  state.seeded.push("mince1123");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1857,7 +1864,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-23h";
+const BUILD="2026-11-23i";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
