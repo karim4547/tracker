@@ -531,7 +531,7 @@ function lastFor(n,d){const W=state.workouts.filter(w=>w.d<d).sort((a,b)=>b.d.lo
 const setsTxt=S=>S.map(s=>`${s[0]?s[0]:"BW"}×${s[1]}`).join(", ");
 const e1=(w,r)=>w>0?w*(1+r/30):0;
 function rangeOf(tg){const S=state.settings,s=String(tg||"");let m=s.match(/(\d+)\s*[×x]\s*(\d+)\s*[–-]\s*(\d+)/);if(m)return{n:+m[1],lo:+m[2],hi:+m[3]};m=s.match(/(\d+)\s*[×x]\s*(\d+)/);if(m)return{n:+m[1],lo:+m[2],hi:+m[2]+2};m=s.match(/(\d+)\s*[–-]\s*(\d+)/);if(m)return{n:3,lo:+m[1],hi:+m[2]};return{n:3,lo:S.rLo,hi:S.rHi}}
-const GYMS={uni:"🏫 Uni gym",other:"🏋️ Other gym"};
+const GYMS={uni:"🏫 Uni gym",other:"🪨 The Cave"};
 const isDB=n=>/dumbbell|\bdb\b|hammer|lateral|incline curl|arnold|kickback|goblet/i.test(n)&&!/cable|machine|smith|band/i.test(n);
 function dbs(){const S=state.settings;return String(S.gym==="other"?S.dbO:S.dbU).split(/[,\s]+/).map(Number).filter(x=>x>0).sort((a,b)=>a-b)}
 function dbNext(w,dir){const L=dbs();if(!L.length)return Math.max(0,w+dir*state.settings.incD);return dir>0?(L.find(x=>x>w+0.01)??L[L.length-1]):([...L].reverse().find(x=>x<w-0.01)??L[0])}
@@ -622,7 +622,7 @@ function vGym(){
   const hist=state.workouts.filter(w=>w.d!==ui.date).sort((a,b)=>b.d.localeCompare(a.d)).slice(0,12);
   const pct=planned?Math.min(100,vol/planned*100):0;
   return `${dnav()}
-  <section class="card"><div class="exh"><h2 style="margin:0">${esc(P.name)}</h2><select id="sess" aria-label="Session" style="width:auto">${opts}</select></div>
+  <section class="card"><div class="exh"><h2 style="margin:0">${esc(key==="custom"&&W&&W.name?W.name:P.name)}</h2><select id="sess" aria-label="Session" style="width:auto">${opts}</select></div>${key==="custom"?`<input id="cname" placeholder="Name this session (e.g. Cave leg day by coach)" value="${esc((W&&W.name)||"")}" aria-label="Custom session name" style="margin-top:8px">`:""}
     ${key!=="rest"?`<div class="seg" style="margin:10px 0 2px">${Object.entries(GYMS).map(([k,l])=>`<button data-a="gymset" data-k="${k}" class="${(state.settings.gym||"uni")===k?"on":""}">${l}</button>`).join("")}</div><p class="mut sm" style="margin:2px 0 8px">Dumbbells here: ${(()=>{const L=dbs();return L.length?`${kgs(L[0])}–${kgs(L[L.length-1])}`:"not set"})()}. The coach only suggests weights this gym has.</p>`:""}
     ${all.length&&key!=="rest"?`<button class="pri wmstart" data-a="wmstart">▶ ${vol?"Continue":"Start"} workout mode</button>`:""}
     ${all.length?`<div class="gprog"><div class="bar"><i style="width:${pct}%;background:var(--red)"></i></div><span class="sm"><b>${vol}</b>/${planned} sets · ${doneEx}/${all.length} exercises · ${fmt(ton)} kg lifted</span></div>`:""}
@@ -632,7 +632,7 @@ function vGym(){
   </section>
   ${gymAgent()}
   ${aiRv("train")}
-  <section class="card"><h2>History</h2>${hist.length?hist.map(w=>`<details><summary>${nice(w.d)} · ${esc((state.plan[w.s]||{name:w.s==="custom"?"Custom":w.s}).name)}</summary>${w.ex.map(e=>`<div class="row"><span class="grow">${esc(e.n)}</span><span class="r mut sm">${e.sets.length?setsTxt(e.sets):esc(e.note||"")}</span></div>`).join("")}</details>`).join(""):`<p class="mut">Past sessions show up here.</p>`}</section>`;
+  <section class="card"><h2>History</h2>${hist.length?hist.map(w=>`<details><summary>${nice(w.d)} · ${esc((state.plan[w.s]||{name:w.s==="custom"?(w.name||"Custom"):w.s}).name)}</summary>${w.ex.map(e=>`<div class="row"><span class="grow">${esc(e.n)}</span><span class="r mut sm">${e.sets.length?setsTxt(e.sets):esc(e.note||"")}</span></div>`).join("")}</details>`).join(""):`<p class="mut">Past sessions show up here.</p>`}</section>`;
 }
 const SUBS={overview:"Overview",photos:"Photos",watch:"Watch",lifts:"Strength",awards:"Awards",training:"Training",forecast:"Forecast",body:"Body",shape:"Shape",food:"Food",habits:"Habits"};
 function vProgress(){
@@ -686,7 +686,7 @@ function vCustom(){
   ${sel("mg","Muscle gain rate",[[0.05,"Cautious, ~0.2 kg a month"],[0.08,"Typical, ~0.35 kg a month"],[0.12,"Optimistic, ~0.5 kg a month"]])}
   ${sel("fH","Forecast length",[[8,"8 weeks"],[12,"12 weeks"],[16,"16 weeks"],[26,"6 months"],[52,"1 year"]])}</div>
   <p class="mut sm">Muscle gain rates are for skeletal muscle on InBody, with gains slowing over time. "Typical" fits someone fairly new to consistent lifting who eats enough protein.</p></details>
-  <details class="card" data-d="Gym coaching" ${ui.op["Gym coaching"]?"open":""}><summary><h2>Gym coaching</h2></summary><label class="f">🏫 Uni gym dumbbells (kg)<input data-ss="dbU" value="${esc(S.dbU)}" inputmode="decimal"></label><label class="f">🏋️ Other gym dumbbells (kg)<input data-ss="dbO" value="${esc(S.dbO)}" inputmode="decimal"></label><p class="mut sm" style="margin-top:0">List every dumbbell weight the gym has, separated by commas. Switch gyms at the top of the Gym tab.</p><div class="two">
+  <details class="card" data-d="Gym coaching" ${ui.op["Gym coaching"]?"open":""}><summary><h2>Gym coaching</h2></summary><label class="f">🏫 Uni gym dumbbells (kg)<input data-ss="dbU" value="${esc(S.dbU)}" inputmode="decimal"></label><label class="f">🪨 The Cave dumbbells (kg)<input data-ss="dbO" value="${esc(S.dbO)}" inputmode="decimal"></label><p class="mut sm" style="margin-top:0">List every dumbbell weight the gym has, separated by commas. Switch gyms at the top of the Gym tab.</p><div class="two">
   ${sel("rLo","Default reps: low",[[5,"5"],[6,"6"],[8,"8"],[10,"10"],[12,"12"]])}${sel("rHi","Default reps: high",[[8,"8"],[10,"10"],[12,"12"],[15,"15"],[20,"20"]])}
   ${sel("incD","Dumbbell jump",[[1,"1 kg"],[2,"2 kg"],[2.5,"2.5 kg"],[5,"5 kg"]])}${sel("incM","Cable / machine jump",[[1.25,"1.25 kg"],[2.5,"2.5 kg"],[5,"5 kg"]])}
   ${sel("incB","Barbell / other jump",[[1.25,"1.25 kg"],[2.5,"2.5 kg"],[5,"5 kg"]])}${sel("rest","Rest timer",[[0,"Off"],[60,"1:00"],[90,"1:30"],[120,"2:00"],[150,"2:30"],[180,"3:00"]])}</div>
@@ -1121,10 +1121,10 @@ function aiRv(kind){const key=GK(),T=RVK[kind][0];
    <details style="margin-top:8px"><summary class="sm">Wins and fixes</summary>${li("✅ Going well",r.wins)}${li("⚠️ Fix",r.fixes)}</details>
    <div class="exh" style="margin-top:10px"><span class="mut sm">Updated ${new Date(R.at).toLocaleString("en-GB",{weekday:"short",hour:"2-digit",minute:"2-digit"})}${R.h!==h?" · new data since":""}</span><button class="ghost" data-a="rvgo" data-k="${kind}" ${busy?"disabled":""} style="min-height:34px;padding:4px 12px">↻ Refresh</button></div>`
   :busy?"":`<button class="pri wide" style="margin-top:8px" data-a="rvgo" data-k="${kind}">Analyze</button>`}</section>`}
-const GYMEQ={uni:"Uni gym (GUC): free weights, benches, barbells, dumbbells in 2 kg steps, common machines. NO pec deck / fly machine and NO cable crossover or cable fly station.",other:"Other gym: full equipment incl. cable stations, cable crossover and pec deck / fly machine. Dumbbells in 2.5 kg steps but there is no 27.5 kg pair (25 then 30)."};
+const GYMEQ={uni:"Uni gym (GUC): free weights, benches, barbells, dumbbells in 2 kg steps, common machines. NO pec deck / fly machine and NO cable crossover or cable fly station.",other:"The Cave gym: full equipment incl. cable stations, cable crossover and pec deck / fly machine. Dumbbells in 2.5 kg steps but there is no 27.5 kg pair (25 then 30)."};
 let gaBusy=0;
 function gaCtx(){const S=state.settings,g=S.gym||"uni",key=sessKey(),P=state.plan[key]||{name:key,ex:[]},SK=((state.skip||{})[ui.date])||[],W=curW(),o=[];
-  o.push(`DATE: ${ui.date} (${pd(ui.date).toDateString()}). Session: ${P.name}. Gym today: ${GYMS[g]}. ${GYMEQ[g]} Dumbbells available here (kg): ${dbs().join(", ")||"unknown"}.`);
+  o.push(`DATE: ${ui.date} (${pd(ui.date).toDateString()}). Session: ${key==="custom"?((curW()||{}).name||"Custom session")+" (custom workout set by his in-person coach; respect the coach's choices, only adjust if Karim asks)":P.name}. Gym today: ${GYMS[g]}. ${GYMEQ[g]} Dumbbells available here (kg): ${dbs().join(", ")||"unknown"}.`);
   o.push("TODAY'S PLAN (current name | planned name | target | last time | alternatives that train the same muscle):");
   for(const e of exFor(P,ui.date)){const n=e[0],orig=e[2]||e[0],H=histOf(n,ui.date).slice(0,3),G=altGroup(n)||altGroup(orig);o.push(`- ${n} | ${orig} | ${e[1]||""} | ${H.map(h=>`${h.d}: ${setsTxt(h.sets)}`).join("; ")||"no history"} | ${G?G[0]+": "+G[2].join(", "):"-"}${SK.includes(norm(orig))||SK.includes(norm(n))?" | SKIPPED TODAY":""}`)}
   if(W)o.push("LOGGED TODAY: "+W.ex.filter(e=>e.sets.length).map(e=>`${e.n} ${setsTxt(e.sets)}`).join("; "));
@@ -1554,7 +1554,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("pointerdown",e=>{window.lastPX=e.clientX;const sv=e.target.closest&&e.target.closest("svg[data-fc],svg[data-k],svg[data-g]");if(!sv){clearTips();return}if(sv){const r=sv.getBoundingClientRect();tipAt(sv,e.clientX-r.left)}});
 document.addEventListener("pointermove",e=>{if(!e.buttons)return;const sv=e.target.closest&&e.target.closest("svg[data-fc],svg[data-k],svg[data-g]");if(sv){const r=sv.getBoundingClientRect();tipAt(sv,e.clientX-r.left)}});
 document.addEventListener("input",e=>{const t=e.target;if(t.dataset&&t.dataset.mb!=null){const R=mbRows()[+t.dataset.mb],wasP=isProt(R),wasF=hasFat(R);R[t.dataset.k]=t.value;if(wasP!==isProt(R)||wasF!==hasFat(R)){saveUI();render();return}const pn=document.getElementById("mbp"+t.dataset.mb);if(pn)pn.innerHTML=prepNote(R);const fn2=document.getElementById("mbf"+t.dataset.mb);if(fn2)fn2.innerHTML=fatNote(R);const el=document.getElementById("mbtot");if(el)el.innerHTML=mbTotals();const nm=document.getElementById("mbn");if(nm)nm.placeholder=mbName();saveUI();return}if(t.id==="aoq"){ui.ao.q=t.value;ui.ao.sel=null;aoRefresh();return}if(t.id==="aoamt"){ui.ao.amt=t.value;const t2=aoTot(),m=document.querySelector("#aob .mbt");if(t2&&m)m.innerHTML=`<div><b class="num">${fmt(t2.k)}</b><span class="mut sm">kcal</span></div><div><b class="num">${r1(t2.p)}</b><span class="mut sm">protein</span></div><div><b class="num">${r1(t2.c)}</b><span class="mut sm">carbs</span></div><div><b class="num">${r1(t2.f)}</b><span class="mut sm">fat</span></div>`;return}if(t.id==="fq"){ui.fq=t.value;saveUI();clearTimeout(window.fqT);window.fqT=setTimeout(()=>{render();const el=document.getElementById("fq");if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length)}},250);return}if(t.id==="mbn"){ui.mb.name=t.value;saveUI();return}if(t.id==="q"){ui.q=t.value;document.getElementById("res").innerHTML=results();saveUI()}else if(t.id==="qty"){ui.qty=parseFloat(t.value)||1;saveUI()}});
-document.addEventListener("change",e=>{const t=e.target;
+document.addEventListener("change",e=>{const t=e.target;if(t.id==="cname"){const W=ensureW();W.name=t.value.trim();commit();return}
   if(t.id==="phd"){ui.phd=t.value||ymd(new Date());return}
   if(t.id==="phpose2"){ui.php2=t.value;render();return}
   if(t.id==="pha"||t.id==="phb"){ui[t.id]=t.value;render();return}
@@ -1584,12 +1584,13 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS[h]&&h!==ui.tab){ui.tab=h;ui.msg="";ui.enter=1;render();window.scrollTo(0,0)}});
 try{if(!state.achInit)checkAch()}catch(e){}
 try{if((state.ingv||0)<4){ingUp3();localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("lychee1")){if(!state.foods.some(f=>/^Lychee warm bowl/.test(f.n)))state.foods.unshift({id:uid(),n:"Lychee warm bowl (corn + red beans)",u:"1 bowl",k:960,p:67,c:115,f:27});state.seeded.push("lychee1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.restEnd=0;
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22c";
+const BUILD="2026-11-22d";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
