@@ -1770,6 +1770,15 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS[h]&&h!==ui.tab){ui.tab=h;ui.msg="";ui.enter=1;render();window.scrollTo(0,0)}});
 try{if(!state.achInit)checkAch()}catch(e){}
 try{if((state.ingv||0)<4){ingUp3();localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("prep1123")){const R=state.recipes=state.recipes||[],S=state.stock=state.stock||[],P=state.prepw=state.prepw||{plan:[],x:[],chk:{}};
+  const mk=(n,serv,tags,items,steps)=>{let r=R.find(x=>x.n===n);if(!r){r={id:uid(),n,serv,tags,items,steps};R.push(r)}return r};
+  const A=mk("Cheesy potato & chicken egg bake",4,"breakfast · fridge",[{n:"Eggs, whole",g:480},{n:"Chicken breast (raw)",g:320},{n:"Potato (boiled)",g:480},{n:"Mozzarella",g:100},{n:"Onion",g:80},{n:"Bell pepper",g:120}],"1. Oven to 200°C. Dice the potatoes (1.5 cm) and boil 8–10 min until just tender, or air-fry.\n2. Dice the chicken small, season with salt, pepper, paprika and garlic powder, and sear in a pan with cooking spray for 5–6 min.\n3. Soften the diced onion and peppers in the same pan for 3 min.\n4. Whisk 9 eggs with salt, pepper and a splash of water.\n5. Line a baking dish (about 20×25 cm). Layer potatoes, chicken and veg, pour the eggs over, top with the mozzarella.\n6. Bake at 180°C for 30–35 min until the centre is set.\n7. Cool, cut into 4, keep in the fridge and eat within 4 days. Reheat 60–90 s in the microwave.");
+  const B=mk("Freezer breakfast wraps",4,"breakfast · freezer",[{n:"Tortilla wrap",g:192},{n:"Eggs, whole",g:330},{n:"Chicken breast (raw)",g:300},{n:"Mozzarella",g:80},{n:"Bell pepper",g:100}],"1. Dice and season the chicken, cook it with the peppers in a pan with cooking spray.\n2. Soft-scramble 6 eggs with salt and pepper.\n3. Mix chicken, peppers, eggs and mozzarella.\n4. Split onto 4 tortillas and roll them like burritos.\n5. Toast seam-side down in a dry pan, 1 min each side.\n6. Cool completely, wrap each in baking paper then foil, and freeze (keeps 1 month).\n7. To eat: remove the foil, microwave from frozen about 2 min, then 3–4 min in the air fryer for crispness.");
+  const st=(n,u,o)=>{if(!S.some(x=>norm(x.n)===norm(n)))S.push({id:uid(),n,q:0,u,low:"",cat:"",store:"Carrefour",...o})};
+  st("Eggs","pcs",{gpp:55,pk:30,price:132,cat:"🥚 Eggs & dairy"});st("Chicken breast","g",{pk:500,price:125,cat:"🥩 Protein"});st("Potato","g",{pk:1000,price:22,cat:"🥔 Carbs"});st("Mozzarella","g",{pk:250,price:45,cat:"🥚 Eggs & dairy"});st("Onion","g",{pk:500,price:10,cat:"🥦 Veg & fruit"});st("Bell pepper","g",{pk:500,price:27,cat:"🥦 Veg & fruit"});st("Tortilla wrap","pcs",{gpp:48,pk:5,price:55,cat:"🥔 Carbs"});
+  for(const r of[A,B]){const p=P.plan.find(x=>x.rid===r.id);if(p)p.b=Math.max(p.b,1);else P.plan.push({rid:r.id,b:1})}
+  (P.x=P.x||[]);if(!P.x.some(x=>/spices/i.test(x.n)))P.x.push({id:uid(),n:"Check at home: salt, pepper, paprika, garlic powder, cooking spray, baking paper & foil"});
+  state.seeded.push("prep1123");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1778,7 +1787,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22x";
+const BUILD="2026-11-22y";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
