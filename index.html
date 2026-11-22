@@ -1220,7 +1220,7 @@ function gymAgent(){const C=((state.coach||{}).gchat||[]).map((m,i)=>[m,i]).filt
   <div class="addrow" style="margin-top:10px"><input id="gaq" placeholder="Ask your gym coach" aria-label="Message to gym coach" autocomplete="off"><button class="pri" data-a="gago" ${gaBusy?"disabled":""}>Send</button></div>
   ${SK.length?`<p class="mut sm" style="margin-top:8px">Skipped today: ${SK.map(esc).join(", ")} · <button class="lnk" data-a="gaunskip">undo</button></p>`:""}</section>`}
 const SCATS=["🥩 Protein","🥚 Eggs & dairy","🥔 Carbs","🥦 Veg & fruit","🧈 Fats & sauces","🧂 Spices & other","🥡 Prepped meals"];
-const STORES=["Carrefour","Breadfast","Seoudi","Gourmet","Metro","Kazyon","Butcher","Local market","Other"];
+const STORES=["Instashop","Carrefour","Breadfast","Seoudi","Gourmet","Metro","Kazyon","Butcher","Local market","Other"];
 const stk=()=>state.stock||(state.stock=[]),recs=()=>state.recipes||(state.recipes=[]),prw=()=>state.prepw||(state.prepw={plan:[],x:[],chk:{}});
 const ingN=n=>state.ing.find(x=>norm(x.n)===norm(n||""))||state.ing.find(x=>norm(x.n).startsWith(norm(n||""))&&n&&n.length>3);
 const stkN=n=>{const k=norm(n||"");return stk().find(s=>!s.prep&&norm(s.n)===k)||stk().find(s=>!s.prep&&k.length>3&&(norm(s.n).includes(k)||k.includes(norm(s.n))))};
@@ -1780,6 +1780,14 @@ try{state.seeded=state.seeded||[];if(!state.seeded.includes("prep1123")){const R
   (P.x=P.x||[]);if(!P.x.some(x=>/spices/i.test(x.n)))P.x.push({id:uid(),n:"Check at home: salt, pepper, paprika, garlic powder, cooking spray, baking paper & foil"});
   state.seeded.push("prep1123");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("pot160")){const p=(state.stock||[]).find(x=>x.n==="Potato");if(p){p.q=Math.max(p.q||0,160);p.note="cooked, frozen: 2 boxes × 80 g"}state.seeded.push("pot160");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("prep1123b")){const S=state.stock||[],g=n=>S.find(x=>x.n===n);
+  const e=g("Eggs");if(e)e.q=Math.max(e.q||0,30);
+  const t=g("Tortilla wrap");if(t)Object.assign(t,{n:"Tortilla wrap",gpp:60,pk:6,price:125,note:"Deli Sun corn tortilla wraps, 6 pcs"});
+  const c=g("Chicken breast");if(c)Object.assign(c,{price:129.97,note:"Lulu fresh boneless chicken breasts, 500 g"});
+  const p=g("Potato");if(p)Object.assign(p,{pk:500,price:27.94});
+  for(const x of S)if(x.store==="Carrefour")x.store="Instashop";
+  const r=(state.recipes||[]).find(x=>x.n==="Freezer breakfast wraps");if(r){const it=r.items.find(i=>i.n==="Tortilla wrap");if(it)it.g=240}
+  state.seeded.push("prep1123b");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1788,7 +1796,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22z";
+const BUILD="2026-11-23a";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
