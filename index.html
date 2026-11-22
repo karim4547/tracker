@@ -315,7 +315,7 @@ function vBuilder(){
 }
 function mbEntry(){const t=mbTot();if(!t.g)return null;const ing=mbRows().filter(r=>ingOf(r.id)&&parseFloat(r.g)).map(r=>{const q=[ingOf(r.id).n,parseFloat(r.g),isProt(r)&&PREPN[r.pr]?r.pr:""];if(hasFat(r)&&ingOf(r.fid)&&fatG(r))q.push(ingOf(r.fid).n,r.fa===""||r.fa==null?1:parseFloat(r.fa),r.fu||"tbsp");else if(!q[2])q.pop();return q});return{n:(ui.mb.name||"").trim()||mbName(),k:r1(t.k),p:r1(t.p),c:r1(t.c),f:r1(t.f),ing,g:t.g}}
 const habD=()=>{state.hab=state.hab||{};return state.hab[ui.date]||{}};
-function setHab(k,v){state.hab=state.hab||{};const h=state.hab[ui.date]=state.hab[ui.date]||{};h[k]=Math.max(0,v);commit()}
+function setHab(k,v){state.hab=state.hab||{};const h=state.hab[ui.date]=state.hab[ui.date]||{};h[k]=Math.max(0,v);if(k==="s")delete h.sw;commit()}
 const HKF=[["steps","Steps"],["active","Active energy (kcal)"],["basal","Resting energy (kcal)"],["exmin","Exercise minutes"],["rhr","Resting heart rate"],["hrv","Heart rate variability (ms)"],["weight","Weight (kg)"],["hr","Heart rate"],["vo2","VO2 max"],["whr","Walking heart rate"],["resp","Respiratory rate"],["dist","Distance (km)"],["flights","Flights climbed"],["sleep","Sleep"],["core","Core sleep"],["deep","Deep sleep"],["rem","REM sleep"],["awake","Awake"],["spo2","Blood oxygen"],["temp","Wrist temperature"],["stand","Stand minutes"],["daylight","Time in daylight"],["noise","Noise exposure"],["hrrec","Cardio recovery"],["wspeed","Walking speed"],["bdist","Breathing disturbances"],["rspeed","Running speed"]];
 const HKD=["sleep","core","deep","rem","awake"];
 function durMin(t){t=String(t||"");let m=0,u=0;const h=t.match(/(\d+(?:[.,]\d+)?)\s*(?:h|hr|hrs|hour|hours)\b/i),mi=t.match(/(\d+(?:[.,]\d+)?)\s*(?:m|min|mins|minute|minutes)\b/i),se=t.match(/(\d+(?:[.,]\d+)?)\s*(?:s|sec|secs|second|seconds)\b/i),c=t.match(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/);
@@ -1524,7 +1524,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-21p";
+const BUILD="2026-11-22a";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
