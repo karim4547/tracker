@@ -1856,6 +1856,14 @@ try{state.seeded=state.seeded||[];if(!state.seeded.includes("mince1123")){const 
   const b=S.findIndex(x=>x.n==="Basterma"&&!(x.q>0));if(b>=0)S.splice(b,1);
   if(!S.some(x=>norm(x.n)==="ground beef"))S.push({id:uid(),n:"Ground beef",q:500,u:"g",low:"",cat:"🥩 Protein",store:"",note:"regular mince (not lean)"});
   state.seeded.push("mince1123");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("skillet1123")){const R=state.recipes||[],P=state.prepw;
+  if(!state.ing.some(x=>x.n==="Pizza / marinara sauce"))state.ing.push({id:uid(),cat:"Sauces",n:"Pizza / marinara sauce",k:50,p:1.6,c:8,f:1.5});
+  let r=R.find(x=>x.n==="Potato beef skillet");if(!r){r={id:uid(),n:"Potato beef skillet",serv:1,tags:"breakfast or meal · cook fresh",items:[{n:"Onion",g:35},{n:"Potato (baked / air-fried, no oil)",g:80},{n:"Pizza / marinara sauce",g:30},{n:"Ground beef 80/20 (raw)",g:100},{n:"Eggs, whole",g:165},{n:"Cheddar",g:30}],
+    steps:"1. Brown the mince with the onion in a pan for 5–6 min with salt, pepper and a pinch of cumin. Tip away the fat.\n2. Add the roasted potatoes (one 80 g freezer box, thawed) and the pasta sauce, and stir 1–2 min.\n3. Make 3 wells, crack in the eggs, cover with a lid and cook 4–5 min until the whites set.\n4. Cheddar on top, lid on for 1 more minute to melt."};R.push(r)}
+  const A=R.find(x=>/egg bake/i.test(x.n));if(A){const p=P.plan.find(x=>x.rid===A.id);if(p)p.b=0}
+  const p2=P.plan.find(x=>x.rid===r.id);if(p2)p2.b=2;else P.plan.push({rid:r.id,b:2});
+  const pot=(state.stock||[]).find(x=>x.n==="Potato");if(pot)pot.n="Potato";
+  {const S=state.stock||[];const on=S.find(x=>x.n==="Onion");if(on)on.q=Math.max(on.q||0,200);if(!S.some(x=>/pasta sauce/i.test(x.n)))S.push({id:uid(),n:"Pasta sauce",q:200,u:"g",low:"",cat:"🧈 Fats & sauces",store:""})}state.seeded.push("skillet1123");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1864,7 +1872,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-23i";
+const BUILD="2026-11-23j";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
