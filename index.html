@@ -1807,6 +1807,14 @@ try{state.seeded=state.seeded||[];if(!state.seeded.includes("menu1123")){const R
   const c=S.find(x=>x.n==="Chicken breast");if(c)Object.assign(c,{note:"buy minced chicken breast",price:150});
   if(!S.some(x=>x.n==="Basterma"))S.push({id:uid(),n:"Basterma",q:0,u:"g",low:"",cat:"🥩 Protein",store:"Instashop",pk:150,price:150,note:"sliced, from the deli counter"});
   state.seeded.push("menu1123");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("simple1123")){const R=state.recipes||[],S=state.stock||[];
+  const A=R.find(x=>/basterma/i.test(x.n)),B=R.find(x=>/crunchwrap/i.test(x.n));
+  if(A)Object.assign(A,{n:"Basterma & cheddar egg bake",serv:4,tags:"breakfast · fridge · 10 min work",items:[{n:"Eggs, whole",g:495},{n:"Basterma",g:150},{n:"Cheddar",g:80},{n:"Potato (boiled)",g:160}],
+    steps:"1. Oven to 180°C. Line a dish with baking paper.\n2. Spread your thawed potatoes in it and tear the basterma over the top.\n3. Whisk 9 eggs with black pepper (no salt, basterma is salty) and pour over. Cover with the cheddar.\n4. Bake 30 min. Cut into 4. Fridge, 4 days. Reheat 1 min."});
+  if(B)Object.assign(B,{n:"Shawarma chicken & cheddar quesadillas",serv:4,tags:"breakfast · fridge or freezer · 15 min work",items:[{n:"Tortilla wrap",g:240},{n:"Chicken breast (raw)",g:500},{n:"Cheddar",g:60}],
+    steps:"1. Slice the chicken thin, toss with shawarma spice and a pinch of salt, and cook in a hot pan for 6–7 min.\n2. Cheddar and chicken on one half of each wrap, then fold it over.\n3. Toast in a dry pan, 2 min a side, until golden and the cheese melts.\n4. Fridge (4 days) or freeze. Reheat 4 min in the air fryer, or 1 min in the microwave. Dip in garlic sauce."});
+  const c=S.find(x=>x.n==="Chicken breast");if(c)Object.assign(c,{note:"Lulu fresh boneless chicken breasts",price:129.97});
+  state.seeded.push("simple1123");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1815,7 +1823,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-23d";
+const BUILD="2026-11-23e";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
