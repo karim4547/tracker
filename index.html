@@ -1346,7 +1346,7 @@ function rate(n,sets){const S=stdOf(n);if(!S||!sets.length)return null;if(S.kind
   const lo=i<0?0:S.lv[i],pct=nx?Math.max(0,Math.min(1,(val-lo)/(nx-lo))):1;
   const toKg=v=>S.kind==="reps"?v+" reps":r1(v*bw)+" kg";
   return{...S,val,lvl,next:nx,pct,overall:Math.max(0,Math.min(1,(i+pct)/4)),cur:S.kind==="reps"?val+" reps":r1(val*bw)+" kg",nextTxt:nx?toKg(nx):null,gap:nx?(S.kind==="reps"?nx-val+" reps":r1((nx-val)*bw)+" kg"):null,bw}}
-function liftData(){const ex={};for(const W of state.workouts)for(const e of W.ex)if(e.sets.length&&!isTimed(e.n,e.tg)&&e.sets.some(q=>q[0]>0||q[1]>0)){(ex[norm(e.n)]=ex[norm(e.n)]||{n:e.n,s:[]}).s.push({d:W.d,sets:e.sets})}
+function liftData(){const ex={};for(const W of state.workouts)for(const e of W.ex)if(e.sets.length&&!(state.hiddenLifts||[]).includes(norm(e.n))&&!isTimed(e.n,e.tg)&&e.sets.some(q=>q[0]>0||q[1]>0)){(ex[norm(e.n)]=ex[norm(e.n)]||{n:e.n,s:[]}).s.push({d:W.d,sets:e.sets})}
   return Object.values(ex).map(x=>{x.s.sort((a,b)=>a.d.localeCompare(b.d));const be=s=>Math.max(0,...s.sets.map(q=>e1(q[0],q[1])));x.now=be(x.s[x.s.length-1]);x.first=be(x.s[0]);x.prev=x.s.length>1?be(x.s[x.s.length-2]):null;x.top=x.s[x.s.length-1].sets.reduce((a,q)=>e1(q[0],q[1])>e1(a[0],a[1])||(!q[0]&&!a[0]&&q[1]>a[1])?q:a);const recent=x.s.slice(-3).flatMap(q=>q.sets);x.r=rate(x.n,recent);x.m=musc(x.n);return x}).sort((a,b)=>b.s.length-a.s.length||a.n.localeCompare(b.n))}
 function ladder(r){return `<div class="lad">${LV.map((l,k)=>`<i style="background:${k<=r.lvl?l[1]:"var(--soft)"}"></i>`).join("")}</div>`}
 const TIER=[["Bronze","#c07a3f"],["Silver","#9aa3ad"],["Gold","#e0a200"],["Diamond","#5ec8f2"]];
@@ -1402,7 +1402,7 @@ function vAwards(){const st=lifeStats(),A=achState(st),xp=xpOf(A,st),L=levelOf(x
   <section class="card"><h2>Achievements · ${un}/${A.length}</h2><div class="bgrid">${A.map(a=>badge(a)).join("")}</div><p class="mut sm">Each one has Bronze, Silver, Gold and Diamond. XP comes from achievements, workouts, sets, logged days and records.</p></section>`}
 function achSheet(id){const a=achState().find(x=>x.id===id);if(!a)return;sheet(`<div class="ach1" style="--c:${a.tier>=0?TIER[a.tier][1]:"var(--line)"}"><span class="bi">${a.ic}</span><h2>${a.name}</h2><p class="mut">${a.desc}: <b style="color:var(--ink)">${r1(a.v)}</b></p></div>${a.t.map((x,i)=>`<div class="row"><span class="tdot" style="background:${i<=a.tier?TIER[i][1]:"var(--soft)"}"></span><b class="grow">${TIER[i][0]}</b><span class="${i<=a.tier?"ok":"mut"}">${i<=a.tier?"✓ ":""}${x}</span></div>`).join("")}`)}
 function vLifts(){
-  const L=liftData();if(!L.length)return`<section class="card"><h2>Strength</h2><p class="mut">Log some sets in Gym and every lift gets rated here.</p></section>`;
+  const L=liftData();if(!L.length)return`<section class="card"><h2>Strength</h2><p class="mut">Log some sets in Gym and every lift gets rated here.</p></section>${(state.hiddenLifts||[]).length?`<p class="mut sm" style="text-align:center">Hidden: ${state.hiddenLifts.map(esc).join(", ")} · <button class="lnk" data-a="unhideall">show again</button></p>`:""}`;
   const R=L.filter(x=>x.r),avg=R.length?R.reduce((a,x)=>a+x.r.overall,0)/R.length:0,score=Math.round(avg*100);
   const grp={};for(const x of R)(grp[x.m]=grp[x.m]||[]).push(x.r.overall);
   const gs=["Chest","Back","Shoulders","Arms","Legs"].map(m=>[m,grp[m]?grp[m].reduce((a,b)=>a+b,0)/grp[m].length:null]);
@@ -1414,7 +1414,7 @@ function vLifts(){
   <div class="tip">${weak&&strong&&weak!==strong?`💡 <b>${weak[0]}</b> is your weakest area and <b>${strong[0]}</b> your strongest. Push ${weak[0].toLowerCase()} hardest for the next few weeks.`:"💡 Keep logging to compare muscle groups."}${miss.length?` No rated lifts yet for ${miss.join(", ").toLowerCase()}.`:""}</div></section>
   <section class="card"><h2>Your lifts</h2><p class="mut sm">Tap a lift for its full breakdown.</p>${L.map((x,i)=>{const r=x.r;return `<button class="lift" data-a="liftd" data-n="${esc(x.n)}"><div class="lt"><b>${esc(x.n)}</b>${r?`<span class="lvl" style="--c:${LV[r.lvl][1]}">${LV[r.lvl][0]}</span>`:`<span class="lvl" style="--c:var(--mut)">Not rated</span>`}</div>
    ${r?`${ladder(r)}<div class="mut sm">${r.cur}${r.next?` · ${LV[r.lvl+1][0]} at ${r.nextTxt} (+${r.gap})`:" · top level"}</div>`:`<div class="mut sm">Best: ${kgs(x.top[0])} × ${x.top[1]} · ${x.s.length} session${x.s.length>1?"s":""}</div>`}</button>`}).join("")}
-  <p class="mut sm">Levels: Needs work → Getting there → Good → Great → Elite. Machines differ between gyms, so treat machine ratings as rough.</p></section>`;
+  <p class="mut sm">Levels: Needs work → Getting there → Good → Great → Elite. Machines differ between gyms, so treat machine ratings as rough.</p></section>${(state.hiddenLifts||[]).length?`<p class="mut sm" style="text-align:center">Hidden: ${state.hiddenLifts.map(esc).join(", ")} · <button class="lnk" data-a="unhideall">show again</button></p>`:""}`;
 }
 function sheet(html){closeSheet();const o=document.createElement("div");o.id="sheet";o.innerHTML=`<div class="sbk" data-a="sclose"></div><div class="spn" role="dialog" aria-modal="true"><div class="grab"></div><button class="ghost sx" data-a="sclose" aria-label="Close">✕</button>${html}</div>`;document.body.appendChild(o);document.body.style.overflow="hidden";requestAnimationFrame(()=>o.classList.add("show"));hook(o)}
 function closeSheet(){try{camStop()}catch(e){}const o=document.getElementById("sheet");if(!o)return;document.body.style.overflow="";o.classList.remove("show");setTimeout(()=>o.remove(),300)}
@@ -1426,7 +1426,7 @@ function liftSheet(n){
   G.lv={unit:"kg",vals:x.s.slice(-12).map(q=>[short(q.d),Math.round(q.sets.reduce((a,t)=>a+t[0]*t[1],0))||q.sets.reduce((a,t)=>a+t[1],0),"var(--blue)"])};
   const byW={};for(const q of x.s)for(const t of q.sets)byW[t[0]]=Math.max(byW[t[0]]||0,t[1]);
   const C=coach(x.n,"",[...x.s].reverse());
-  sheet(`<h2>${esc(x.n)}</h2>${r?`<div class="lt" style="margin:6px 0 10px"><span class="lvl big" style="--c:${LV[r.lvl][1]}">${LV[r.lvl][0]}</span><span class="mut sm">${esc(r.name)} standard</span></div>
+  sheet(`<h2>${esc(x.n)}</h2><button class="lnk sm" data-a="hidelift" data-n="${esc(x.n)}" style="margin:-4px 0 6px">🙈 Hide from progress</button>${r?`<div class="lt" style="margin:6px 0 10px"><span class="lvl big" style="--c:${LV[r.lvl][1]}">${LV[r.lvl][0]}</span><span class="mut sm">${esc(r.name)} standard</span></div>
   <div class="ladv">${LV.map((l,k)=>`<div class="${k===r.lvl?"on":""}" style="--c:${l[1]}"><b>${l[0]}</b><span>${r.kind==="reps"?(k?r.lv[k-1]:0)+"+ reps":(k?r1(r.lv[k-1]*r.bw):0)+"+ kg"}</span></div>`).join("")}</div>
   <p class="sm">${r.next?`You're at <b>${r.cur}</b>${r.kind==="bw"?" estimated max":""}. <b>${r.gap}</b> more gets you to <b>${LV[r.lvl+1][0]}</b>. At about 1% a week that's roughly ${Math.max(1,Math.ceil(Math.log(r.next/Math.max(r.val,1e-3))/Math.log(1.01)))} weeks.`:`Top level. Hold it and keep form perfect.`}</p>`:`<p class="mut sm">No standard for this exercise yet. Progress still tracked below.</p>`}
   <div class="coach ${C.k}"><b>Next session: ${C.head}</b><span>${C.why}</span></div>
@@ -1591,6 +1591,8 @@ document.addEventListener("click",e=>{
   else if(a==="goaw"){ui.sub="awards";location.hash="progress";if(ui.tab==="progress"){ui.enter=1;render()}}
   else if(a==="achd"){achSheet(b.dataset.id)}
   else if(a==="liftd"){liftSheet(b.dataset.n)}
+  else if(a==="hidelift"){state.hiddenLifts=state.hiddenLifts||[];const k=norm(b.dataset.n);if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);closeSheet();commit();toast(`${esc(b.dataset.n)} hidden from progress`,"",["unhideall","Undo"])}
+  else if(a==="unhideall"){state.hiddenLifts=[];commit()}
   else if(a==="sclose"){closeSheet()}
   else if(a==="lift"){ui.lift=b.dataset.n;render();window.scrollTo({top:0,behavior:"smooth"})}
   else if(a==="fsub"){ui.fsub=b.dataset.k;ui.fq="";ui.enter=1;render()}
@@ -1649,13 +1651,14 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS[h]&&h!==ui.tab){ui.tab=h;ui.msg="";ui.enter=1;render();window.scrollTo(0,0)}});
 try{if(!state.achInit)checkAch()}catch(e){}
 try{if((state.ingv||0)<4){ingUp3();localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("lychee1")){if(!state.foods.some(f=>/^Lychee warm bowl/.test(f.n)))state.foods.unshift({id:uid(),n:"Lychee warm bowl (corn + red beans)",u:"1 bowl",k:960,p:67,c:115,f:27});state.seeded.push("lychee1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.restEnd=0;
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22r";
+const BUILD="2026-11-22s";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
