@@ -510,7 +510,7 @@ const ALT=[["Leg extensions",/leg ext|sissy/i,["Leg extension","Single-leg exten
 const altGroup=n=>ALT.find(g=>g[2].some(x=>norm(x)===norm(n)))||ALT.find(g=>g[1].test(n));
 const LIB={"🦵 Legs":[["Quads",[["Back squat","4×6–10"],["Front squat","4×6–10"],["Hack squat","3×8–12"],["Leg press","3×10–15"],["Smith machine squat","3×8–12"],["Goblet squat","3×10–12"],["Pendulum squat","3×8–12"],["Leg extension","3×12–15"],["Single-leg extension","3×12–15"],["Single-leg extension hold","3×30 s"],["Leg extension hold","3×30 s"],["Sissy squat","3×10–15"],["Wall squat","3×30 s"],["Jump squats","3×10–12"]]],
   ["Lunges",[["Bulgarian split squat","3×8–12"],["Walking lunges","3×10–12"],["Reverse lunges","3×10–12"],["Step-ups","3×10–12"],["Lateral lunges","3×10–12"],["Smith split squat","3×8–12"]]],
-  ["Hamstrings",[["Romanian deadlift","3×8–10"],["Dumbbell RDL","3×8–12"],["Stiff-leg deadlift","3×8–10"],["Good morning","3×8–10"],["Lying leg curl","3×10–15"],["Seated leg curl","3×10–15"],["Single-leg seated leg curl","3×10–15"],["Single-leg lying leg curl","3×10–15"],["Standing single-leg curl","3×10–15"],["Nordic curl","3×5–8"],["45° back extension","3×12–15"]]],
+  ["Hamstrings",[["Romanian deadlift","3×8–10"],["Dumbbell RDL","3×8–12"],["Stiff-leg deadlift","3×8–10"],["Good morning","3×8–10"],["Lying leg curl","3×10–15"],["Seated leg curl","3×10–15"],["Single-leg seated leg curl","3×10–15"],["Single-leg seated leg curl hold","3×20 s"],["Single-leg lying leg curl","3×10–15"],["Standing single-leg curl","3×10–15"],["Nordic curl","3×5–8"],["45° back extension","3×12–15"]]],
   ["Glutes",[["Hip thrust","3×8–12"],["Smith hip thrust","3×8–12"],["Glute bridge","3×12–15"],["Cable kickback","3×12–15"],["Hip abduction machine","3×12–20"],["Hip adduction machine","3×12–20"],["Glute bridge hold","3×30 s"]]],
   ["Calves",[["Standing calf raise","4×10–15"],["Seated calf raise","3×12–20"],["Leg press calf raise","3×12–15"],["Smith calf raise","3×10–15"]]]],
 "💪 Chest":[["Press",[["Barbell bench press","4×6–10"],["Dumbbell bench press","3×8–12"],["Machine chest press","3×8–12"],["Smith machine bench press","3×8–12"],["Decline press","3×8–12"],["Weighted push-ups","3×8–15"],["Push-ups","3×10–20"],["Chest dips","3×8–12"]]],
@@ -1650,7 +1650,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22o";
+const BUILD="2026-11-22p";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
