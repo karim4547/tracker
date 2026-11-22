@@ -1334,7 +1334,7 @@ const STD=[
  [/fly|pec deck/,"Chest fly",[.15,.3,.5,.7,.9],"bw"],
  [/straight.?arm/,"Straight-arm pulldown",[.15,.3,.45,.6,.8],"bw"]];
 const bwNow=()=>latest("w")||state.settings.weight||70;
-function stdOf(n){const s=n.toLowerCase();for(const x of STD)if(x[0].test(s))return{name:x[1],lv:x[2],kind:x[3]};return null}
+function stdOf(n){const s=n.toLowerCase();for(const x of STD)if(x[0].test(s)){if(x[3]==="bw"&&isUni(n)&&!/per hand/.test(x[1]))return{name:x[1]+(/leg|squat|lunge|step|pistol|calf|deadlift|rdl/i.test(n+x[1])?" (per leg)":" (per arm)"),lv:x[2].map(v=>v/2),kind:x[3]};return{name:x[1],lv:x[2],kind:x[3]}}return null}
 function rate(n,sets){const S=stdOf(n);if(!S||!sets.length)return null;const bw=bwNow();
   const val=S.kind==="reps"?Math.max(...sets.filter(s=>!s[0]).map(s=>s[1]),0)||Math.max(...sets.map(s=>s[1]+Math.round(s[0]/bw*30))):Math.max(...sets.map(s=>e1(s[0],s[1])))/bw;
   let i=-1;for(let k=0;k<5;k++)if(val>=S.lv[k])i=k;const lvl=Math.max(0,i),nx=i<4?S.lv[i+1]:null;
@@ -1650,7 +1650,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22m";
+const BUILD="2026-11-22n";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
