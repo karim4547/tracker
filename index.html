@@ -320,13 +320,17 @@ const HKF=[["steps","Steps"],["active","Active energy (kcal)"],["basal","Resting
 const HKD=["sleep","core","deep","rem","awake"];
 function durMin(t){t=String(t||"");let m=0,u=0;const h=t.match(/(\d+(?:[.,]\d+)?)\s*(?:h|hr|hrs|hour|hours)\b/i),mi=t.match(/(\d+(?:[.,]\d+)?)\s*(?:m|min|mins|minute|minutes)\b/i),se=t.match(/(\d+(?:[.,]\d+)?)\s*(?:s|sec|secs|second|seconds)\b/i),c=t.match(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/);
   if(h){m+=parseFloat(h[1].replace(",","."))*60;u=1}if(mi){m+=parseFloat(mi[1].replace(",","."));u=1}if(se){m+=parseFloat(se[1].replace(",","."))/60;u=1}if(!u&&c){m=+c[1]*60+ +c[2]+(c[3]?+c[3]/60:0);u=1}return u?m:null}
+const posMin=t=>{t=String(t||"").trim();if(!/^\d+(?::\d{1,2}){0,2}(?:\.\d+)?$/.test(t))return null;return t.split(":").reduce((a,b)=>a*60+parseFloat(b),0)/60};
+const stDur=(k,t)=>k!=="sleep"?(posMin(t)??durMin(t)):durMin(t);
 const hmS=m=>m==null?"–":`${Math.floor(m/60)}h ${z(Math.round(m%60))}m`;
 function numOf(v){v=String(v||"").replace(/,(?=\d{3}\b)/g,"").replace(",",".");const m=v.match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null}
-function parseHK(txt){if(!/TRK/i.test(txt||""))return null;const o={},V={},U={};let cur=null;
+function parseHK(txt){if(!/TRK/i.test(txt||""))return null;const o={},V={},U={},SV=[],SD=[];let cur=null;
   for(const raw of txt.split(/\n|;|\|/)){const line=raw.trim();if(!line||/^TRK$/i.test(line))continue;const m=line.match(/^([a-z][a-z0-9]*)\s*[:=]\s*(.*)$/i);
+    if(m&&(m[1].toLowerCase()==="stv"||m[1].toLowerCase()==="std")){cur=m[1].toLowerCase();const r=m[2].trim();if(r){if(cur==="stv")SV.push(r);else{const d=posMin(r)??durMin(r);if(d!=null)SD.push(d)}}continue}
+    if(cur==="stv"&&!m){SV.push(line);continue}if(cur==="std"&&!m){const d=posMin(line)??durMin(line);if(d!=null)SD.push(d);continue}
     if(m&&!(m[1].toLowerCase()==="date"||HKF.some(f=>f[0]===m[1].toLowerCase()))){cur=null;continue}
-    if(m){cur=m[1].toLowerCase();if(cur==="date"){const d=m[2].match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(d)o.date=`${d[1]}-${z(+d[2])}-${z(+d[3])}`;cur=null;continue}V[cur]=V[cur]||[];if(m[2].trim()){const dm=HKD.includes(cur)?durMin(m[2]):null;if(dm!=null){V[cur].push(dm);U[cur]=1}else{const n=numOf(m[2]);if(n!=null)V[cur].push(n)}}continue}
-    if(cur){const dm=HKD.includes(cur)?durMin(line):null;if(dm!=null){V[cur].push(dm);U[cur]=1;continue}const n=numOf(line);if(n!=null)V[cur].push(n)}}
+    if(m){cur=m[1].toLowerCase();if(cur==="date"){const d=m[2].match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(d)o.date=`${d[1]}-${z(+d[2])}-${z(+d[3])}`;cur=null;continue}V[cur]=V[cur]||[];if(m[2].trim()){const dm=HKD.includes(cur)?stDur(cur,m[2]):null;if(dm!=null){V[cur].push(dm);U[cur]=1}else{const n=numOf(m[2]);if(n!=null)V[cur].push(n)}}continue}
+    if(cur){const dm=HKD.includes(cur)?stDur(cur,line):null;if(dm!=null){V[cur].push(dm);U[cur]=1;continue}const n=numOf(line);if(n!=null)V[cur].push(n)}}
   for(const k in V){const L=V[k];if(!L.length)continue;if(HKD.includes(k)){let t=L.reduce((a,b)=>a+b,0);if(!U[k]){if(Math.max(...L)>240)t/=60;else if(k==="sleep"&&t<=24)t*=60}o[k]=Math.round(t);continue}
     if(["stand","daylight"].includes(k)){o[k]=Math.round(L.reduce((a,b)=>a+b,0));continue}
     if(["spo2","temp","noise","wspeed","bdist"].includes(k)){let a=L.reduce((x,y)=>x+y,0)/L.length;if(k==="spo2"&&a<=1)a*=100;o[k]=r1(a);continue}
@@ -334,6 +338,8 @@ function parseHK(txt){if(!/TRK/i.test(txt||""))return null;const o={},V={},U={};
     if(k==="hrrec"){o[k]=Math.round(Math.max(...L));continue}
     o[k]=["steps","active","basal","exmin","dist","flights"].includes(k)?L.reduce((a,b)=>a+b,0):["hrv","hr","resp","whr"].includes(k)?L.reduce((a,b)=>a+b,0)/L.length:k==="vo2"?Math.max(...L):L[0];if(k==="hr"){o.hrMax=Math.round(Math.max(...L));o.hrMin=Math.round(Math.min(...L));o.hr=Math.round(o.hr)}}
   if(o.dist!=null)o.dist=Math.round(o.dist*100)/100;if(o.resp!=null)o.resp=r1(o.resp);if(o.vo2!=null)o.vo2=r1(o.vo2);if(o.whr!=null)o.whr=Math.round(o.whr);
+  if(SV.length&&SV.length===SD.length){const T={deep:0,core:0,rem:0,awake:0,un:0};let any=0;SV.forEach((v,i)=>{const x=v.toLowerCase();const k=/deep/.test(x)?"deep":/rem/.test(x)?"rem":/core/.test(x)?"core":/awake/.test(x)?"awake":/asleep/.test(x)?"un":null;if(k){T[k]+=SD[i];any=1}});
+    if(any){for(const k of["deep","core","rem","awake"])o[k]=Math.round(T[k]);o.sleep=T.deep+T.core+T.rem+T.un}}
   if(o.sleep==null&&(o.core!=null||o.deep!=null||o.rem!=null))o.sleep=(o.core||0)+(o.deep||0)+(o.rem||0);if(o.sleep!=null)o.sleep=Math.round(o.sleep/60*100)/100;
   if(o.hrv!=null&&o.hrv<1)o.hrv*=1000;if(o.hrv!=null)o.hrv=Math.round(o.hrv);for(const k of["steps","active","basal","exmin"])if(o[k]!=null)o[k]=Math.round(o[k]);return Object.keys(o).filter(k=>k!=="date").length?o:null}
 function applyHK(o,quiet){const d=o.date||ymd(new Date());state.hk=state.hk||{};state.hk[d]={...(state.hk[d]||{}),...o,t:Date.now()};delete state.hk[d].date;
@@ -1524,7 +1530,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22a";
+const BUILD="2026-11-22b";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
