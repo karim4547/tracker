@@ -263,7 +263,7 @@ function results(){
   const q=ui.q.trim().toLowerCase(),f=freq();
   let L=state.foods.filter(x=>!q||x.n.toLowerCase().includes(q));
   L.sort((a,b)=>(f[b.n]||0)-(f[a.n]||0)||a.n.localeCompare(b.n));
-  if(!L.length)return `<p class="mut sm">No match. Add it as a custom food below.</p>`;
+  if(!L.length)return `<p class="mut sm">No match.</p><button class="pri wide" data-a="newfood" data-k="${esc(ui.q.trim())}">＋ Create “${esc(ui.q.trim())}” as a packaged food</button>`;
   return L.slice(0,q?20:8).map(x=>`<div class="row"><div class="grow"><b>${esc(x.n)}</b><div class="mut sm">${esc(x.u)} · ${fmt(x.k)} kcal · ${r1(x.p)} g P</div></div><button data-a="add" data-id="${x.id}">Add</button></div>`).join("");
 }
 const ADD0=[["Sauces","BBQ sauce",172,0.8,41,0.6,17],["Sauces","Hot sauce (Tabasco-style)",12,0.5,0.8,0.8,15],["Sauces","Soy sauce",53,8.1,4.9,0.6,16],["Sauces","Teriyaki sauce",89,5.9,15.6,0,18],["Sauces","Sweet chili sauce",226,0.4,55,0.3,19],["Sauces","Honey mustard",240,1,30,12,15],["Sauces","Mustard",60,3.7,5.8,3.3,15],["Sauces","Ranch dressing",430,1.3,6,44,15],["Sauces","Caesar dressing",542,2.2,3.3,58,15],["Sauces","Thousand Island dressing",379,1,15,35,16],["Sauces","Balsamic vinegar",88,0.5,17,0,16],["Sauces","Balsamic vinaigrette",320,0.1,12,30,15],["Sauces","Pesto",450,5,6,45,16],["Sauces","Hummus",166,7.9,14.3,9.6,15],["Sauces","Buffalo sauce",40,0.5,2,3,16],["Sauces","Garlic sauce (toum)",640,1,5,68,14],["Sauces","Light mayonnaise",238,0.9,9,22,15],["Sauces","Salsa",36,1.5,7,0.2,16],["Sauces","Guacamole",155,2,8.6,14,15],["Sauces","Lemon juice",22,0.4,6.9,0.2,15],["Sauces","Big Mac-style burger sauce",420,1,12,41,15],["Sauces","Chipotle mayo",600,1,4,64,15],["Sauces","Pizza / marinara sauce",50,1.6,8,1.5,16],["Sauces","Cocktail sauce",110,1,26,0.5,17],
@@ -1514,6 +1514,7 @@ document.addEventListener("click",e=>{
   else if(a==="rmset"){const W=curW(),ex=W&&W.ex.find(x=>norm(x.n)===norm(b.dataset.n));if(ex){ex.sets.splice(+b.dataset.j,1);commit()}}
   else if(a==="exr"){ui.exr=b.dataset.k;ui.libOpen=1;document.querySelectorAll(".libg").forEach(g=>g.hidden=g.dataset.r!==ui.exr);document.querySelectorAll('[data-a="exr"]').forEach(x=>x.className=x.dataset.k===ui.exr?"pri":"ghost");const q=document.getElementById("exq");if(q)q.value=""}
   else if(a==="side"){ui.sf=ui.sf||{};const k=norm(b.dataset.n);ui.sf[k]=!ui.sf[k];if(ui.wm)renderWM();else render()}
+  else if(a==="newfood"){ui.op=ui.op||{};ui.op.foodadd=true;ui.fsub="foods";ui.nfn=b.dataset.k||"";closeSheet();location.hash="foods";setTimeout(()=>{const f=document.getElementById("ff");if(f){if(ui.nfn)f.elements.n.value=ui.nfn;f.scrollIntoView({block:"center"});(ui.nfn?f.elements.u:f.elements.n).focus()}},350)}
   else if(a==="tgedit"){const n=b.dataset.n,tg=b.dataset.tg||"",T=isTimed(n,tg),sn=+((tg.match(/^(\d+)/)||[])[1]||3),sec=+((tg.match(/(\d+)\s*s/i)||[])[1]||30),rp=((tg.split(/[x×]/)[1]||"8–12").trim());
     sheet(`<h2>${esc(n)}</h2><p class="mut sm">Set it to whatever your coach says. Applies to this session.</p><label class="f">Sets<input id="tgn" type="number" inputmode="numeric" min="1" max="12" value="${sn}"></label><label class="f">${T?"Seconds per hold":"Reps (e.g. 10 or 8–12)"}<input id="tgv" ${T?'type="number" inputmode="numeric"':'inputmode="numeric"'} value="${T?sec:esc(rp)}"></label><button class="pri wide" data-a="tgsave" data-n="${esc(n)}" data-t="${T?1:0}" style="margin-top:10px">Save</button>`)}
   else if(a==="tgsave"){const n=b.dataset.n,T=b.dataset.t==="1",sn=Math.max(1,Math.min(12,parseInt(document.getElementById("tgn").value,10)||3)),v=String(document.getElementById("tgv").value||"").trim().replace(/\s*[-–]\s*/,"–");if(!v)return;const tg=`${sn}×${T?(parseInt(v,10)||30)+" s":v}`;const W=ensureW();let o=W.ex.find(x=>norm(x.n)===norm(n));if(!o){o={n,sets:[]};W.ex.push(o)}o.tg=tg;closeSheet();commit();toast(`${esc(n)}: ${esc(tg)}`,"good")}
@@ -1651,6 +1652,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS[h]&&h!==ui.tab){ui.tab=h;ui.msg="";ui.enter=1;render();window.scrollTo(0,0)}});
 try{if(!state.achInit)checkAch()}catch(e){}
 try{if((state.ingv||0)<4){ingUp3();localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("lychee1")){if(!state.foods.some(f=>/^Lychee warm bowl/.test(f.n)))state.foods.unshift({id:uid(),n:"Lychee warm bowl (corn + red beans)",u:"1 bowl",k:960,p:67,c:115,f:27});state.seeded.push("lychee1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1658,7 +1660,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22s";
+const BUILD="2026-11-22t";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
