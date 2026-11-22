@@ -1867,6 +1867,7 @@ try{state.seeded=state.seeded||[];if(!state.seeded.includes("skillet1123")){cons
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("skillet1123b")){const r=(state.recipes||[]).find(x=>x.n==="Potato beef skillet");if(r)r.items=[{n:"Onion",g:25},{n:"Potato (baked / air-fried, no oil)",g:80},{n:"Pizza / marinara sauce",g:15},{n:"Ground beef 80/20 (raw)",g:60},{n:"Eggs, whole",g:165},{n:"Cheddar",g:25}];state.seeded.push("skillet1123b");save&&save()}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("leanmince1")){const P=state.prepw;if(P){P.x=P.x||[];if(!P.x.some(x=>/lean mince/i.test(x.n)))P.x.push({id:uid(),n:"Lean mince 5–10% fat · 500 g (for next skillets)"})}state.seeded.push("leanmince1")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("beef320")){const b=(state.stock||[]).find(x=>x.n==="Ground beef");if(b)b.q=320;state.seeded.push("beef320")}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("skillet5")){const r=(state.recipes||[]).find(x=>x.n==="Potato beef skillet"),P=state.prepw;if(r&&P){const p=P.plan.find(x=>x.rid===r.id);if(p)p.b=5;else P.plan.push({rid:r.id,b:5});r.tags="breakfast · ~335 g cooked per box · keeps 3–4 days, freeze extras"}state.seeded.push("skillet5")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1875,7 +1876,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-23m";
+const BUILD="2026-11-23n";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
