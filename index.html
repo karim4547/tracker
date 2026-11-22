@@ -1306,43 +1306,50 @@ function vHabitsP(){const S=state.settings,td=new Date();td.setHours(0,0,0,0);co
   return (hasHK?c("hkb","Total burned vs. eating target (kcal)")+c("hka","Active calories")+c("hkr","Resting heart rate")+c("hkv","HRV (ms)"):`<section class="card"><h2>⌚ Apple Watch</h2><p class="mut sm">Sync from Apple Health (Settings → Apple Health) to see calories burned, resting heart rate and HRV here.</p></section>`)+c("hw","Water (L)")+c("hsl","Sleep (hours)")+c("hst","Steps")+`<p class="mut sm" style="text-align:center">Change your goals in Settings → Habits.</p>`}
 const LV=[["Needs work","var(--red)"],["Getting there","#e07a2e"],["Good","var(--yel)"],["Great","var(--grn)"],["Elite","#8b5cf6"]];
 const STD=[
- [/bench|chest press|machine press|flat.*press/,"Bench / chest press",[.5,.75,1.1,1.5,1.9],"bw"],
- [/incline.*(dumbbell|db).*press|(dumbbell|db).*(bench|press)(?!.*shoulder)/,"Dumbbell press (per hand)",[.2,.3,.45,.62,.8],"bw"],
- [/incline.*machine|incline.*press/,"Incline press",[.45,.7,1,1.35,1.7],"bw"],
- [/(dumbbell|db).*shoulder|arnold/,"DB shoulder press (per hand)",[.14,.22,.35,.5,.65],"bw"],
+ [/assisted|nordic|wrist curl|reverse curl|pullover|good ?morning|back ext|rack pull|sissy|wall squat|jump squat|plate squeeze/,null],
+ [/(dumbbell|db).*shoulder|arnold/,"DB shoulder press (per hand)",[.15,.25,.4,.6,.85],"bw"],
+ [/(dumbbell|db).*(rdl|romanian|stiff)/,"Dumbbell RDL (per hand)",[.38,.55,.75,1,1.3],"bw"],
+ [/(dumbbell|db).*(bench|press)(?!.*shoulder)|squeeze press/,"Dumbbell press (per hand)",[.2,.35,.5,.75,1],"bw"],
+ [/incline.*(press|bench)/,"Incline press",[.45,.7,.95,1.3,1.65],"bw"],
+ [/bench|chest press|machine press|decline press|flat.*press/,"Bench / chest press",[.5,.75,1,1.5,2],"bw"],
+ [/overhead.*(ext|tricep)|tricep.*overhead/,"Overhead triceps extension",[.15,.25,.4,.6,.8],"bw"],
  [/overhead|ohp|military|shoulder press/,"Shoulder press",[.35,.55,.8,1.1,1.4],"bw"],
- [/hack squat/,"Hack squat",[.75,1.25,1.75,2.5,3.2],"bw"],
+ [/hack squat|pendulum/,"Hack squat",[.5,1,1.5,2.25,3],"bw"],
+ [/goblet/,"Goblet squat",[.2,.35,.5,.7,.9],"bw"],
+ [/front squat/,"Front squat",[.6,1,1.25,1.75,2.25],"bw"],
  [/squat/,"Squat",[.75,1.25,1.5,2.25,2.75],"bw"],
- [/romanian|rdl|stiff/,"Romanian deadlift",[.75,1.1,1.5,2,2.5],"bw"],
+ [/romanian|rdl|stiff/,"Romanian deadlift",[.75,1.1,1.5,2,2.6],"bw"],
  [/deadlift/,"Deadlift",[1,1.5,2,2.5,3],"bw"],
- [/leg press/,"Leg press",[1,2,2.75,3.75,5],"bw"],
- [/leg curl|hamstring curl/,"Leg curl",[.3,.5,.75,1,1.3],"bw"],
- [/leg ext/,"Leg extension",[.4,.7,1,1.4,1.8],"bw"],
+ [/seated calf/,"Seated calf raise",[.3,.6,1,1.5,2],"bw"],
  [/calf/,"Calf raise",[.5,1,1.5,2.25,3],"bw"],
+ [/leg press/,"Leg press",[1,1.75,2.75,4,5.25],"bw"],
+ [/leg curl|hamstring curl/,"Leg curl",[.3,.5,.75,1.05,1.4],"bw"],
+ [/leg ext/,"Leg extension",[.5,.75,1.1,1.5,2],"bw"],
  [/hip thrust/,"Hip thrust",[.75,1.25,1.75,2.5,3.25],"bw"],
  [/glute bridge(?!.*hold)/,"Glute bridge",[.6,1,1.5,2.1,2.8],"bw"],
  [/abduct/,"Hip abduction",[.6,.9,1.25,1.7,2.2],"bw"],
  [/adduct/,"Hip adduction",[.6,.9,1.25,1.7,2.2],"bw"],
- [/pull-?ups?\b|\bchin-?ups?\b/,"Pull-ups",[1,5,10,15,22],"reps"],
- [/\bdips?\b/,"Dips",[1,6,12,20,30],"reps"],
- [/push-?up/,"Push-ups",[5,15,30,45,60],"reps"],
- [/pulldown(?!.*straight)|lat pull/,"Lat pulldown",[.5,.75,1,1.3,1.6],"bw"],
- [/cable row|seated row|machine row|chest-supported row|t-?bar/,"Seated / machine row",[.5,.75,1,1.4,1.75],"bw"],
+ [/pull-?ups?\b|\bchin-?ups?\b/,"Pull-ups",[1,5,12,20,28],"reps"],
+ [/\bdips?\b/,"Dips",[1,8,15,25,35],"reps"],
+ [/push-?ups?/,"Push-ups",[5,15,30,50,70],"reps"],
+ [/straight.?arm/,"Straight-arm pulldown",[.15,.3,.45,.6,.8],"bw"],
+ [/pulldown|lat pull/,"Lat pulldown",[.5,.75,1,1.3,1.65],"bw"],
+ [/(dumbbell|db).*row|one.?arm.*row/,"Dumbbell row (per hand)",[.25,.4,.6,.85,1.1],"bw"],
  [/barbell row|bent.*row|pendlay/,"Barbell row",[.5,.75,1,1.5,1.75],"bw"],
- [/(dumbbell|db).*row|one.?arm row/,"Dumbbell row (per hand)",[.25,.4,.6,.85,1.1],"bw"],
- [/preacher|incline.*curl|(dumbbell|db|hammer).*curl/,"Dumbbell curl (per hand)",[.1,.15,.25,.35,.45],"bw"],
+ [/cable row|seated row|machine row|chest-supported row|t-?bar/,"Seated / machine row",[.5,.75,1,1.4,1.75],"bw"],
+ [/(dumbbell|db|hammer|incline|spider|concentration).*curl/,"Dumbbell curl (per hand)",[.1,.18,.28,.42,.55],"bw"],
  [/curl/,"Barbell / cable curl",[.2,.4,.6,.85,1.1],"bw"],
  [/pushdown|push-down|tricep.*(ext|press)/,"Triceps pushdown",[.2,.35,.55,.75,1],"bw"],
  [/skull/,"Skull crushers",[.15,.3,.5,.7,.9],"bw"],
- [/lateral/,"Lateral raise (per hand)",[.05,.1,.15,.22,.3],"bw"],
+ [/machine lateral/,"Machine lateral raise",[.1,.2,.3,.45,.6],"bw"],
+ [/lateral raise|side raise/,"Lateral raise (per hand)",[.05,.1,.17,.25,.35],"bw"],
  [/rear delt|reverse fly/,"Rear delt fly (per hand)",[.04,.08,.13,.2,.27],"bw"],
  [/reverse pec deck/,"Rear delt machine",[.25,.4,.6,.85,1.1],"bw"],
  [/pec deck|machine fly|butterfly/,"Pec deck",[.45,.7,1.05,1.5,2],"bw"],
  [/cable fly|crossover/,"Cable fly (per side)",[.1,.17,.27,.4,.55],"bw"],
- [/fly|pec deck/,"Chest fly",[.15,.3,.5,.7,.9],"bw"],
- [/straight.?arm/,"Straight-arm pulldown",[.15,.3,.45,.6,.8],"bw"]];
+ [/fly/,"Chest fly",[.15,.3,.5,.7,.9],"bw"]];
 const bwNow=()=>latest("w")||state.settings.weight||70;
-function stdOf(n){const s=n.toLowerCase();for(const x of STD)if(x[0].test(s)){if(x[3]==="bw"&&isUni(n)&&!/per hand/.test(x[1]))return{name:x[1]+(/leg|squat|lunge|step|pistol|calf|deadlift|rdl/i.test(n+x[1])?" (per leg)":" (per arm)"),lv:x[2].map(v=>v/2),kind:x[3]};return{name:x[1],lv:x[2],kind:x[3]}}return null}
+function stdOf(n){const s=n.toLowerCase();for(const x of STD)if(x[0].test(s)){if(!x[1])return null;if(x[3]==="bw"&&isUni(n)&&!/per hand/.test(x[1]))return{name:x[1]+(/leg|squat|lunge|step|pistol|calf|deadlift|rdl/i.test(n+x[1])?" (per leg)":" (per arm)"),lv:x[2].map(v=>v/2),kind:x[3]};return{name:x[1],lv:x[2],kind:x[3]}}return null}
 function rate(n,sets){const S=stdOf(n);if(!S||!sets.length)return null;if(S.kind==="bw"&&sets.every(q=>!q[0]))return null;const bw=bwNow();
   const val=S.kind==="reps"?Math.max(...sets.filter(s=>!s[0]).map(s=>s[1]),0)||Math.max(...sets.map(s=>s[1]+Math.round(s[0]/bw*30))):Math.max(...sets.map(s=>e1(s[0],s[1])))/bw;
   let i=-1;for(let k=0;k<5;k++)if(val>=S.lv[k])i=k;const lvl=Math.max(0,i),nx=i<4?S.lv[i+1]:null;
@@ -1663,7 +1670,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22u";
+const BUILD="2026-11-22v";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
