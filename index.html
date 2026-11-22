@@ -508,6 +508,33 @@ const ALT=[["Leg extensions",/leg ext|sissy/i,["Leg extension","Single-leg exten
 ["Traps",/shrug/i,["Barbell shrug","Dumbbell shrug","Smith shrug","Cable shrug"]],
 ["Abs",/crunch|leg raise|ab wheel|\babs?\b|plank|sit-?up|rollout/i,["Cable crunch","Hanging leg raise","Ab wheel rollout","Decline crunch","Machine crunch"]]];
 const altGroup=n=>ALT.find(g=>g[2].some(x=>norm(x)===norm(n)))||ALT.find(g=>g[1].test(n));
+const LIB={"🦵 Legs":[["Quads",[["Back squat","4×6–10"],["Front squat","4×6–10"],["Hack squat","3×8–12"],["Leg press","3×10–15"],["Smith machine squat","3×8–12"],["Goblet squat","3×10–12"],["Pendulum squat","3×8–12"],["Leg extension","3×12–15"],["Single-leg extension","3×12–15"],["Sissy squat","3×10–15"],["Wall squat","3×30 s"],["Jump squats","3×10–12"]]],
+  ["Lunges",[["Bulgarian split squat","3×8–12"],["Walking lunges","3×10–12"],["Reverse lunges","3×10–12"],["Step-ups","3×10–12"],["Lateral lunges","3×10–12"],["Smith split squat","3×8–12"]]],
+  ["Hamstrings",[["Romanian deadlift","3×8–10"],["Dumbbell RDL","3×8–12"],["Stiff-leg deadlift","3×8–10"],["Good morning","3×8–10"],["Lying leg curl","3×10–15"],["Seated leg curl","3×10–15"],["Standing single-leg curl","3×10–15"],["Nordic curl","3×5–8"],["45° back extension","3×12–15"]]],
+  ["Glutes",[["Hip thrust","3×8–12"],["Smith hip thrust","3×8–12"],["Glute bridge","3×12–15"],["Cable kickback","3×12–15"],["Hip abduction machine","3×12–20"],["Hip adduction machine","3×12–20"],["Glute bridge hold","3×30 s"]]],
+  ["Calves",[["Standing calf raise","4×10–15"],["Seated calf raise","3×12–20"],["Leg press calf raise","3×12–15"],["Smith calf raise","3×10–15"]]]],
+"💪 Chest":[["Press",[["Barbell bench press","4×6–10"],["Dumbbell bench press","3×8–12"],["Machine chest press","3×8–12"],["Smith machine bench press","3×8–12"],["Decline press","3×8–12"],["Weighted push-ups","3×8–15"],["Push-ups","3×10–20"],["Chest dips","3×8–12"]]],
+  ["Upper chest",[["Incline dumbbell press","3×8–12"],["Incline barbell press","3×6–10"],["Incline machine press","3×8–12"],["Incline Smith press","3×8–12"],["Low-to-high cable fly","3×12–15"]]],
+  ["Fly",[["Cable fly","3×12–15"],["Pec deck","3×12–15"],["High-to-low cable fly","3×12–15"],["Dumbbell squeeze press","3×10–12"],["Deficit push-ups","3×10–15"],["Plate squeeze press","3×12–15"],["Dumbbell fly","3×10–12"]]]],
+"🔙 Back":[["Lats",[["Lat pulldown","3×8–12"],["Close-grip lat pulldown","3×8–12"],["Single-arm lat pulldown","3×10–12"],["Pull-ups","3×6–10"],["Chin-ups","3×6–10"],["Assisted pull-ups","3×8–12"],["Straight-arm pulldown","3×12–15"],["Dumbbell pullover","3×10–12"]]],
+  ["Rows",[["Chest-supported row","3×8–12"],["Seated cable row","3×10–12"],["One-arm dumbbell row","3×8–12"],["Barbell row","3×6–10"],["T-bar row","3×8–10"],["Machine row","3×10–12"],["Inverted row","3×8–12"],["Meadows row","3×8–12"]]],
+  ["Lower back & traps",[["Deadlift","3×3–6"],["Rack pull","3×5–8"],["Back extension","3×12–15"],["Barbell shrug","3×10–15"],["Dumbbell shrug","3×10–15"],["Cable shrug","3×12–15"]]]],
+"🏔 Shoulders":[["Press",[["Seated dumbbell shoulder press","3×8–12"],["Machine shoulder press","3×8–12"],["Barbell overhead press","3×6–10"],["Arnold press","3×8–12"],["Smith machine shoulder press","3×8–12"]]],
+  ["Side delts",[["Dumbbell lateral raise","4×12–15"],["Cable lateral raise","3×12–15"],["Machine lateral raise","3×12–15"],["Lean-away lateral raise","3×12–15"],["Upright row","3×10–12"]]],
+  ["Rear delts",[["Reverse pec deck","3×12–15"],["Face pull","3×12–15"],["Cable rear delt fly","3×12–15"],["Rear delt dumbbell fly","3×12–15"]]]],
+"🦾 Arms":[["Biceps",[["Barbell curl","3×8–12"],["EZ-bar curl","3×8–12"],["Dumbbell curl","3×10–12"],["Incline dumbbell curl","3×10–12"],["Cable curl","3×10–15"],["Preacher curl","3×10–12"],["Hammer curl","3×10–12"],["Spider curl","3×10–12"]]],
+  ["Triceps",[["Triceps pushdown","3×10–15"],["Rope pushdown","3×10–15"],["Overhead cable extension","3×10–15"],["Overhead dumbbell extension","3×10–12"],["Skull crushers","3×8–12"],["Dips","3×8–12"],["Close-grip bench press","3×6–10"],["Single-arm pushdown","3×12–15"]]],
+  ["Forearms & grip",[["Wrist curl","3×12–20"],["Reverse curl","3×10–15"],["Farmer's carry","3×40 s"],["Dead hang","3×30 s"]]]],
+"🧱 Core":[["Abs",[["Cable crunch","3×10–15"],["Hanging leg raise","3×8–15"],["Ab wheel rollout","3×8–12"],["Decline crunch","3×12–20"],["Machine crunch","3×10–15"],["Russian twist","3×16–20"],["Dead bug","3×10–12"],["Pallof press","3×10–12"]]],
+  ["Holds",[["Plank","3×45 s"],["Side plank","3×30 s"],["Hollow hold","3×30 s"],["L-sit","3×20 s"]]]]};
+const notUni=n=>/pec deck|cable fly|crossover|low-to-high cable|high-to-low cable/i.test(n);
+function exLib(key,W){const regs=Object.keys(LIB),nm=((W&&W.name)||"").toLowerCase();if(!ui.exr)ui.exr=/push|chest/.test(nm)?regs[1]:/pull|back/.test(nm)?regs[2]:/shoulder/.test(nm)?regs[3]:/arm/.test(nm)?regs[4]:/core|abs/.test(nm)?regs[5]:regs[0];
+  const have=new Set(W?W.ex.map(e=>norm(e.n)):[]),uni=(state.settings.gym||"uni")==="uni",open=key==="custom"||ui.libOpen;
+  return`<section class="card"><details ${open?"open":""} data-d="lib"><summary><h2 style="display:inline;margin:0">📚 Exercise library</h2> <span class="mut sm">tap to add</span></summary>
+  <div class="chips" style="margin:10px 0 6px">${regs.map(r=>`<button class="${r===ui.exr?"pri":"ghost"}" data-a="exr" data-k="${esc(r)}" style="min-height:36px;padding:4px 12px">${esc(r)}</button>`).join("")}</div>
+  <input id="exq" placeholder="Search all exercises" aria-label="Search exercises" autocomplete="off" style="margin-bottom:6px">
+  <div id="exlist">${regs.map(r=>LIB[r].map(([g,L])=>`<div class="libg" data-r="${esc(r)}" ${r===ui.exr?"":"hidden"}><p class="mut sm" style="margin:10px 0 4px"><b>${esc(g)}</b></p>${L.map(([n,tg])=>{const on=have.has(norm(n)),na=uni&&notUni(n);return`<button class="ghost librow" data-a="libadd" data-n="${esc(n)}" data-tg="${esc(tg)}" data-nm="${esc(n.toLowerCase())}" ${na?"disabled":""} style="display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;margin:3px 0;min-height:40px;${on?"border-color:var(--grn);":""}"><span>${on?"✓ ":"＋ "}${esc(n)}${na?' <span class="mut sm">· not at Uni gym</span>':""}</span><span class="tag">${esc(tg)}</span></button>`}).join("")}</div>`).join("")).join("")}</div>
+  <p class="mut sm" style="margin-top:8px">Exercises are added in the order you tap them. Tap a ✓ one again to remove it (only if no sets are logged).</p></details></section>`}
 const gymSw=()=>((state.gymSwap||{})[state.settings.gym||"uni"])||{};
 const exFor=(P,d)=>{const sw=(state.swap||{})[d]||{},gs=gymSw();return P.ex.map(e=>{const k=norm(e[0]),s=sw[k]??gs[k];return s&&norm(s)!==k?[s,e[1],e[0],sw[k]?"day":"gym"]:[e[0],e[1]]})};
 function swapSheet(o){const sw=(state.swap||{})[ui.date]||{},cur=sw[norm(o)]??gymSw()[norm(o)]??o,gN=GYMS[state.settings.gym||"uni"],G=altGroup(cur)||altGroup(o),canPerm=!!state.plan[sessKey()];ui.swo=o;
@@ -635,6 +662,7 @@ function vGym(){
     <div class="addrow" style="margin-top:10px"><input id="newex" placeholder="Add exercise, e.g. Wall squat 3x30s" aria-label="Exercise name"><button data-a="addex">Add</button></div>
     <p class="mut sm">Green chip: beat last time · grey: matched · red: under. Bodyweight moves: log 0 kg.</p>
   </section>
+  ${exLib(key,W)}
   ${gymAgent()}
   ${aiRv("train")}
   <section class="card"><h2>History</h2>${hist.length?hist.map(w=>`<details><summary>${nice(w.d)} · ${esc((state.plan[w.s]||{name:w.s==="custom"?(w.name||"Custom"):w.s}).name)}</summary>${w.ex.map(e=>`<div class="row"><span class="grow">${esc(e.n)}</span><span class="r mut sm">${e.sets.length?setsTxt(e.sets):esc(e.note||"")}</span></div>`).join("")}</details>`).join(""):`<p class="mut">Past sessions show up here.</p>`}</section>`;
@@ -1471,6 +1499,8 @@ document.addEventListener("click",e=>{
     h.iv=setInterval(tick,250);render();tick()}
   else if(a==="set"){const i=b.dataset.i,w=parseFloat(document.getElementById("w"+i).value)||0,r=parseInt(document.getElementById("r"+i).value,10);if(!r){document.getElementById("r"+i).focus();return}logSet(b.dataset.n,w,r,b.dataset.tg);commit();startRest()}
   else if(a==="rmset"){const W=curW(),ex=W&&W.ex.find(x=>norm(x.n)===norm(b.dataset.n));if(ex){ex.sets.splice(+b.dataset.j,1);commit()}}
+  else if(a==="exr"){ui.exr=b.dataset.k;ui.libOpen=1;document.querySelectorAll(".libg").forEach(g=>g.hidden=g.dataset.r!==ui.exr);document.querySelectorAll('[data-a="exr"]').forEach(x=>x.className=x.dataset.k===ui.exr?"pri":"ghost");const q=document.getElementById("exq");if(q)q.value=""}
+  else if(a==="libadd"){const n=b.dataset.n,W=ensureW(),o=W.ex.find(x=>norm(x.n)===norm(n));ui.libOpen=1;if(o){if(o.sets.length){toast(`${esc(n)} already has sets logged`,"warn");return}W.ex.splice(W.ex.indexOf(o),1);toast(`Removed ${esc(n)}`)}else{W.ex.push({n,sets:[],tg:b.dataset.tg});toast(`Added ${esc(n)} · ${esc(b.dataset.tg)}`,"good")}const y=window.scrollY;commit();requestAnimationFrame(()=>window.scrollTo(0,y))}
   else if(a==="addex"){let n=document.getElementById("newex").value.trim(),tg="";if(!n)return;const mm=n.match(/^(.*?)[\s,-]+(\d+)\s*[x×*]\s*(\d+)\s*(s|sec|secs|seconds|reps?)?$/i);if(mm&&mm[1].trim()){n=mm[1].trim();tg=`${mm[2]}×${mm[3]}${mm[4]&&/^s/i.test(mm[4])?" s":""}`}const W=ensureW();const o=W.ex.find(x=>norm(x.n)===norm(n));if(!o)W.ex.push({n,sets:[],tg});else if(tg)o.tg=tg;commit()}
   else if(a==="bossd")bossSheet();
   else if(a==="phpose"){ui.php=b.dataset.k;ui.pha=ui.phb=null;render()}
@@ -1588,6 +1618,7 @@ document.addEventListener("submit",e=>{e.preventDefault();const f=e.target,v=n=>
 });
 document.addEventListener("toggle",e=>{const d=e.target;if(d.dataset&&d.dataset.d){ui.op[d.dataset.d]=d.open;saveUI()}},true);
 window.addEventListener("scroll",()=>{if(document.querySelector(".tipg")){clearTimeout(tipT);tipT=setTimeout(clearTips,400)}},{passive:true});
+document.addEventListener("input",e=>{if(e.target&&e.target.id==="exq"){const q=e.target.value.trim().toLowerCase();document.querySelectorAll(".libg").forEach(g=>{if(!q){g.hidden=g.dataset.r!==ui.exr;g.querySelectorAll(".librow").forEach(r=>r.hidden=false);return}let any=0;g.querySelectorAll(".librow").forEach(r=>{const m=r.dataset.nm.includes(q);r.hidden=!m;if(m)any=1});g.hidden=!any})}});
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target&&e.target.id==="gaq"){e.preventDefault();const q=e.target.value.trim();if(q)gymAsk(q)}});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")cloudPull();if(document.visibilityState==="visible"&&ui.hkPend&&Date.now()-ui.hkPend<600000){render();const b=document.querySelector(".watch");if(b&&ui.tab==="today")b.scrollIntoView({behavior:"smooth",block:"center"});toast("Shortcut done? Tap ✓ to finish syncing","good")}});
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS[h]&&h!==ui.tab){ui.tab=h;ui.msg="";ui.enter=1;render();window.scrollTo(0,0)}});
@@ -1599,7 +1630,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22e";
+const BUILD="2026-11-22f";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
