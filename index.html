@@ -1788,6 +1788,11 @@ try{state.seeded=state.seeded||[];if(!state.seeded.includes("prep1123b")){const 
   for(const x of S)if(x.store==="Carrefour")x.store="Instashop";
   const r=(state.recipes||[]).find(x=>x.n==="Freezer breakfast wraps");if(r){const it=r.items.find(i=>i.n==="Tortilla wrap");if(it)it.g=240}
   state.seeded.push("prep1123b");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("ched1123")){const S=state.stock=state.stock||[];
+  for(const [n,g] of [["Cheesy potato & chicken egg bake",80],["Freezer breakfast wraps",60]]){const r=(state.recipes||[]).find(x=>x.n===n);if(r){const it=r.items.find(i=>i.n==="Mozzarella");if(it){it.n="Cheddar";it.g=g}r.steps=r.steps.replace(/mozzarella/g,"cheddar")}}
+  if(!S.some(x=>norm(x.n)==="cheddar"))S.push({id:uid(),n:"Cheddar",q:250,u:"g",low:"",cat:"🥚 Eggs & dairy",store:"Instashop",pk:250,price:89.99,note:"Lulu white cheddar"});
+  const m=S.find(x=>x.n==="Mozzarella");if(m&&!(m.q>0))S.splice(S.indexOf(m),1);
+  state.seeded.push("ched1123");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1796,7 +1801,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-23a";
+const BUILD="2026-11-23b";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
