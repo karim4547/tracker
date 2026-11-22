@@ -495,7 +495,7 @@ const ALT=[["Leg extensions",/leg ext|sissy/i,["Leg extension","Single-leg exten
 ["Shoulders · press",/shoulder press|overhead press|military|arnold|\bohp\b/i,["Seated dumbbell shoulder press","Machine shoulder press","Barbell overhead press","Arnold press","Smith machine shoulder press"]],
 ["Triceps",/tricep|pushdown|push-down|skull|overhead.*ext|close-?grip|\bdips?\b|jm press/i,["Triceps pushdown","Rope pushdown","Overhead cable extension","Skull crushers","Dips","Close-grip bench press","Single-arm pushdown"]],
 ["Upper chest",/incline.*(press|bench)/i,["Incline dumbbell press","Incline barbell press","Incline machine press","Incline Smith press","Low-to-high cable fly"]],
-["Chest · fly",/fly|flye|pec deck|crossover|squeeze press|svend/i,["Cable fly","Pec deck","Low-to-high cable fly","Dumbbell squeeze press","Deficit push-ups","Plate squeeze press","Dumbbell fly"]],
+["Chest · fly",/fly|flye|pec deck|crossover|squeeze press|svend/i,["Cable fly","Pec deck","Low-to-high cable fly","Dumbbell squeeze press","Deficit push-ups","Plate squeeze press"]],
 ["Chest · press",/bench|chest press|push-?up/i,["Barbell bench press","Dumbbell bench press","Machine chest press","Smith machine bench press","Weighted push-ups"]],
 ["Biceps",/curl/i,["Barbell curl","EZ-bar curl","Dumbbell curl","Incline dumbbell curl","Cable curl","Preacher curl","Hammer curl"]],
 ["Lats · vertical pull",/pulldown|pull-?up|chin|pullover/i,["Lat pulldown","Close-grip lat pulldown","Single-arm lat pulldown","Pull-ups","Assisted pull-ups","Straight-arm pulldown"]],
@@ -512,10 +512,10 @@ const LIB={"🦵 Legs":[["Quads",[["Back squat","4×6–10"],["Front squat","4×
   ["Lunges",[["Bulgarian split squat","3×8–12"],["Walking lunges","3×10–12"],["Reverse lunges","3×10–12"],["Step-ups","3×10–12"],["Lateral lunges","3×10–12"],["Smith split squat","3×8–12"]]],
   ["Hamstrings",[["Romanian deadlift","3×8–10"],["Dumbbell RDL","3×8–12"],["Stiff-leg deadlift","3×8–10"],["Good morning","3×8–10"],["Lying leg curl","3×10–15"],["Seated leg curl","3×10–15"],["Single-leg seated leg curl","3×10–15"],["Single-leg seated leg curl hold","3×20 s"],["Single-leg lying leg curl","3×10–15"],["Standing single-leg curl","3×10–15"],["Nordic curl","3×5–8"],["45° back extension","3×12–15"]]],
   ["Glutes",[["Hip thrust","3×8–12"],["Smith hip thrust","3×8–12"],["Glute bridge","3×12–15"],["Cable kickback","3×12–15"],["Hip abduction machine","3×12–20"],["Hip adduction machine","3×12–20"],["Glute bridge hold","3×30 s"]]],
-  ["Calves",[["Standing calf raise","4×10–15"],["Seated calf raise","3×12–20"],["Leg press calf raise","3×12–15"],["Smith calf raise","3×10–15"]]]],
+  ["Calves",[["Standing calf raise","4×10–15"],["Single-leg bodyweight calf raise","3×12–20"],["Seated calf raise","3×12–20"],["Leg press calf raise","3×12–15"],["Smith calf raise","3×10–15"]]]],
 "💪 Chest":[["Press",[["Barbell bench press","4×6–10"],["Dumbbell bench press","3×8–12"],["Machine chest press","3×8–12"],["Smith machine bench press","3×8–12"],["Decline press","3×8–12"],["Weighted push-ups","3×8–15"],["Push-ups","3×10–20"],["Chest dips","3×8–12"]]],
   ["Upper chest",[["Incline dumbbell press","3×8–12"],["Incline barbell press","3×6–10"],["Incline machine press","3×8–12"],["Incline Smith press","3×8–12"],["Low-to-high cable fly","3×12–15"]]],
-  ["Fly",[["Cable fly","3×12–15"],["Pec deck","3×12–15"],["High-to-low cable fly","3×12–15"],["Dumbbell squeeze press","3×10–12"],["Deficit push-ups","3×10–15"],["Plate squeeze press","3×12–15"],["Dumbbell fly","3×10–12"]]]],
+  ["Fly",[["Cable fly","3×12–15"],["Pec deck","3×12–15"],["High-to-low cable fly","3×12–15"],["Dumbbell squeeze press","3×10–12"],["Deficit push-ups","3×10–15"],["Plate squeeze press","3×12–15"]]]],
 "🔙 Back":[["Lats",[["Lat pulldown","3×8–12"],["Close-grip lat pulldown","3×8–12"],["Single-arm lat pulldown","3×10–12"],["Pull-ups","3×6–10"],["Chin-ups","3×6–10"],["Assisted pull-ups","3×8–12"],["Straight-arm pulldown","3×12–15"],["Dumbbell pullover","3×10–12"]]],
   ["Rows",[["Chest-supported row","3×8–12"],["Seated cable row","3×10–12"],["One-arm dumbbell row","3×8–12"],["Barbell row","3×6–10"],["T-bar row","3×8–10"],["Machine row","3×10–12"],["Inverted row","3×8–12"],["Meadows row","3×8–12"]]],
   ["Lower back & traps",[["Deadlift","3×3–6"],["Rack pull","3×5–8"],["Back extension","3×12–15"],["Barbell shrug","3×10–15"],["Dumbbell shrug","3×10–15"],["Cable shrug","3×12–15"]]]],
@@ -1180,6 +1180,7 @@ async function gymAsk(q){if(gaBusy||!q)return;if(!GK()){toast("Add your Gemini k
 You can change his workout. Propose changes as actions; he taps to apply them.
 Rules:
 - Only suggest exercises he can do at the gym he's at today (see equipment). Never suggest cable or pec-deck moves at the uni gym.
+- Never suggest dumbbell flys (Karim dislikes them). For chest flys use pec deck or cable fly at The Cave, and dumbbell squeeze press, deficit push-ups or plate squeeze press at the uni gym.
 - Swaps must train the same muscle. Prefer the listed alternatives, but you may suggest others.
 - For dumbbell moves, only use weights from the available dumbbells list.
 - Pain or injury: never diagnose. Swap to moves that don't load or provoke the sore area, suggest lighter loads, and tell him to stop any move that causes sharp pain. If pain is sharp, shooting, causes numbness, or lasts more than a few days, tell him to see a doctor or physiotherapist.
@@ -1339,7 +1340,7 @@ const STD=[
  [/straight.?arm/,"Straight-arm pulldown",[.15,.3,.45,.6,.8],"bw"]];
 const bwNow=()=>latest("w")||state.settings.weight||70;
 function stdOf(n){const s=n.toLowerCase();for(const x of STD)if(x[0].test(s)){if(x[3]==="bw"&&isUni(n)&&!/per hand/.test(x[1]))return{name:x[1]+(/leg|squat|lunge|step|pistol|calf|deadlift|rdl/i.test(n+x[1])?" (per leg)":" (per arm)"),lv:x[2].map(v=>v/2),kind:x[3]};return{name:x[1],lv:x[2],kind:x[3]}}return null}
-function rate(n,sets){const S=stdOf(n);if(!S||!sets.length)return null;const bw=bwNow();
+function rate(n,sets){const S=stdOf(n);if(!S||!sets.length)return null;if(S.kind==="bw"&&sets.every(q=>!q[0]))return null;const bw=bwNow();
   const val=S.kind==="reps"?Math.max(...sets.filter(s=>!s[0]).map(s=>s[1]),0)||Math.max(...sets.map(s=>s[1]+Math.round(s[0]/bw*30))):Math.max(...sets.map(s=>e1(s[0],s[1])))/bw;
   let i=-1;for(let k=0;k<5;k++)if(val>=S.lv[k])i=k;const lvl=Math.max(0,i),nx=i<4?S.lv[i+1]:null;
   const lo=i<0?0:S.lv[i],pct=nx?Math.max(0,Math.min(1,(val-lo)/(nx-lo))):1;
@@ -1654,7 +1655,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22q";
+const BUILD="2026-11-22r";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
