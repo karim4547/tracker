@@ -1333,8 +1333,8 @@ function rate(n,sets){const S=stdOf(n);if(!S||!sets.length)return null;const bw=
   let i=-1;for(let k=0;k<5;k++)if(val>=S.lv[k])i=k;const lvl=Math.max(0,i),nx=i<4?S.lv[i+1]:null;
   const lo=i<0?0:S.lv[i],pct=nx?Math.max(0,Math.min(1,(val-lo)/(nx-lo))):1;
   const toKg=v=>S.kind==="reps"?v+" reps":r1(v*bw)+" kg";
-  return{...S,val,lvl,next:nx,pct,overall:Math.min(1,(i+pct)/4),cur:S.kind==="reps"?val+" reps":r1(val*bw)+" kg",nextTxt:nx?toKg(nx):null,gap:nx?(S.kind==="reps"?nx-val+" reps":r1((nx-val)*bw)+" kg"):null,bw}}
-function liftData(){const ex={};for(const W of state.workouts)for(const e of W.ex)if(e.sets.length){(ex[norm(e.n)]=ex[norm(e.n)]||{n:e.n,s:[]}).s.push({d:W.d,sets:e.sets})}
+  return{...S,val,lvl,next:nx,pct,overall:Math.max(0,Math.min(1,(i+pct)/4)),cur:S.kind==="reps"?val+" reps":r1(val*bw)+" kg",nextTxt:nx?toKg(nx):null,gap:nx?(S.kind==="reps"?nx-val+" reps":r1((nx-val)*bw)+" kg"):null,bw}}
+function liftData(){const ex={};for(const W of state.workouts)for(const e of W.ex)if(e.sets.length&&!isTimed(e.n,e.tg)&&e.sets.some(q=>q[0]>0||q[1]>0)){(ex[norm(e.n)]=ex[norm(e.n)]||{n:e.n,s:[]}).s.push({d:W.d,sets:e.sets})}
   return Object.values(ex).map(x=>{x.s.sort((a,b)=>a.d.localeCompare(b.d));const be=s=>Math.max(0,...s.sets.map(q=>e1(q[0],q[1])));x.now=be(x.s[x.s.length-1]);x.first=be(x.s[0]);x.prev=x.s.length>1?be(x.s[x.s.length-2]):null;x.top=x.s[x.s.length-1].sets.reduce((a,q)=>e1(q[0],q[1])>e1(a[0],a[1])||(!q[0]&&!a[0]&&q[1]>a[1])?q:a);const recent=x.s.slice(-3).flatMap(q=>q.sets);x.r=rate(x.n,recent);x.m=musc(x.n);return x}).sort((a,b)=>b.s.length-a.s.length||a.n.localeCompare(b.n))}
 function ladder(r){return `<div class="lad">${LV.map((l,k)=>`<i style="background:${k<=r.lvl?l[1]:"var(--soft)"}"></i>`).join("")}</div>`}
 const TIER=[["Bronze","#c07a3f"],["Silver","#9aa3ad"],["Gold","#e0a200"],["Diamond","#5ec8f2"]];
@@ -1395,10 +1395,10 @@ function vLifts(){
   const grp={};for(const x of R)(grp[x.m]=grp[x.m]||[]).push(x.r.overall);
   const gs=["Chest","Back","Shoulders","Arms","Legs"].map(m=>[m,grp[m]?grp[m].reduce((a,b)=>a+b,0)/grp[m].length:null]);
   const have=gs.filter(g=>g[1]!=null),weak=have.length?have.reduce((a,b)=>b[1]<a[1]?b:a):null,strong=have.length?have.reduce((a,b)=>b[1]>a[1]?b:a):null,miss=gs.filter(g=>g[1]==null).map(g=>g[0]);
-  const lvlName=s=>LV[Math.min(4,Math.floor(s/100*4+0.0001))][0];
+  const lvlName=s=>LV[Math.max(0,Math.min(4,Math.floor(s/100*4+0.0001)))][0];
   return `<section class="card score"><div class="sc"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="50" fill="none" stroke="var(--soft)" stroke-width="12"/><circle class="arc" cx="60" cy="60" r="50" fill="none" stroke="url(#sg)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(314*avg).toFixed(1)} 314" transform="rotate(-90 60 60)"/><defs><linearGradient id="sg"><stop offset="0" stop-color="#e0a200"/><stop offset="1" stop-color="#d7262e"/></linearGradient></defs><text x="60" y="66" text-anchor="middle" font-size="30" font-weight="700" fill="var(--ink)">${cu(score)}</text></svg>
   <div><div class="mut sm">Strength score</div><b class="big2">${lvlName(score)}</b><p class="sm">Rated against lifters at your bodyweight (${r1(bwNow())} kg), from your best sets in the last 3 sessions.</p></div></div>
-  <div class="mgrid">${gs.map(([m,v])=>`<div class="mg ${v==null?"none":""}"><b>${m}</b>${v==null?`<span class="mut sm">no data</span>`:`<div class="bar"><i style="width:${Math.max(4,v*100)}%;background:${LV[Math.min(4,Math.floor(v*4+0.0001))][1]}"></i></div><span class="sm">${LV[Math.min(4,Math.floor(v*4+0.0001))][0]}</span>`}</div>`).join("")}</div>
+  <div class="mgrid">${gs.map(([m,v])=>`<div class="mg ${v==null?"none":""}"><b>${m}</b>${v==null?`<span class="mut sm">no data</span>`:`<div class="bar"><i style="width:${Math.max(4,v*100)}%;background:${LV[Math.max(0,Math.min(4,Math.floor(v*4+0.0001)))][1]}"></i></div><span class="sm">${LV[Math.max(0,Math.min(4,Math.floor(v*4+0.0001)))][0]}</span>`}</div>`).join("")}</div>
   <div class="tip">${weak&&strong&&weak!==strong?`💡 <b>${weak[0]}</b> is your weakest area and <b>${strong[0]}</b> your strongest. Push ${weak[0].toLowerCase()} hardest for the next few weeks.`:"💡 Keep logging to compare muscle groups."}${miss.length?` No rated lifts yet for ${miss.join(", ").toLowerCase()}.`:""}</div></section>
   <section class="card"><h2>Your lifts</h2><p class="mut sm">Tap a lift for its full breakdown.</p>${L.map((x,i)=>{const r=x.r;return `<button class="lift" data-a="liftd" data-n="${esc(x.n)}"><div class="lt"><b>${esc(x.n)}</b>${r?`<span class="lvl" style="--c:${LV[r.lvl][1]}">${LV[r.lvl][0]}</span>`:`<span class="lvl" style="--c:var(--mut)">Not rated</span>`}</div>
    ${r?`${ladder(r)}<div class="mut sm">${r.cur}${r.next?` · ${LV[r.lvl+1][0]} at ${r.nextTxt} (+${r.gap})`:" · top level"}</div>`:`<div class="mut sm">Best: ${kgs(x.top[0])} × ${x.top[1]} · ${x.s.length} session${x.s.length>1?"s":""}</div>`}</button>`}).join("")}
@@ -1635,7 +1635,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22i";
+const BUILD="2026-11-22j";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
