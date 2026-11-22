@@ -1336,6 +1336,9 @@ const STD=[
  [/skull/,"Skull crushers",[.15,.3,.5,.7,.9],"bw"],
  [/lateral/,"Lateral raise (per hand)",[.05,.1,.15,.22,.3],"bw"],
  [/rear delt|reverse fly/,"Rear delt fly (per hand)",[.04,.08,.13,.2,.27],"bw"],
+ [/reverse pec deck/,"Rear delt machine",[.25,.4,.6,.85,1.1],"bw"],
+ [/pec deck|machine fly|butterfly/,"Pec deck",[.45,.7,1.05,1.5,2],"bw"],
+ [/cable fly|crossover/,"Cable fly (per side)",[.1,.17,.27,.4,.55],"bw"],
  [/fly|pec deck/,"Chest fly",[.15,.3,.5,.7,.9],"bw"],
  [/straight.?arm/,"Straight-arm pulldown",[.15,.3,.45,.6,.8],"bw"]];
 const bwNow=()=>latest("w")||state.settings.weight||70;
@@ -1660,7 +1663,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22t";
+const BUILD="2026-11-22u";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
