@@ -603,12 +603,12 @@ function wmSummary(){
 }
 function vGym(){
   const W=curW(),key=sessKey(),P=state.plan[key]||{name:key==="rest"?"Rest day":"Custom",ex:[]};
-  const PX=exFor(P,ui.date),names=PX.map(e=>e[0]),extra=W?W.ex.map(e=>e.n).filter(n=>!names.some(x=>norm(x)===norm(n))):[];
+  const SKP=((state.skip||{})[ui.date])||[],PX=exFor(P,ui.date).filter(e=>!SKP.includes(norm(e[2]||e[0]))&&!SKP.includes(norm(e[0]))),names=PX.map(e=>e[0]),extra=W?W.ex.map(e=>e.n).filter(n=>!names.some(x=>norm(x)===norm(n))):[];
   const all=[...names,...extra];
   const opts=Object.entries(state.plan).map(([k,v])=>`<option value="${k}" ${k===key?"selected":""}>${esc(v.name)}</option>`).join("")+`<option value="custom" ${key==="custom"?"selected":""}>Custom</option><option value="rest" ${key==="rest"?"selected":""}>Rest day</option>`;
   const vol=W?W.ex.reduce((a,e)=>a+e.sets.length,0):0,ton=W?W.ex.reduce((a,e)=>a+e.sets.reduce((b,s)=>b+s[0]*s[1],0),0):0;
   let planned=0,doneEx=0;
-  const cards=all.map((n,i)=>{const px=PX.find(e=>norm(e[0])===norm(n)),tg=(px||[])[1]||"",done=W&&W.ex.find(e=>norm(e.n)===norm(n)),ds=done?done.sets:[],H=histOf(n,ui.date),C=coach(n,tg,H);planned+=C.R.n;if(ds.length>=C.R.n)doneEx++;
+  const cards=all.map((n,i)=>{const px=PX.find(e=>norm(e[0])===norm(n)),tg=(px||[])[1]||((W&&W.ex.find(e=>norm(e.n)===norm(n)))||{}).tg||"",done=W&&W.ex.find(e=>norm(e.n)===norm(n)),ds=done?done.sets:[],H=histOf(n,ui.date),C=coach(n,tg,H);planned+=C.R.n;if(ds.length>=C.R.n)doneEx++;
     const nxt=ds.length,tw=ds.length?ds[ds.length-1][0]:(C.w??""),tr=C.reps[Math.min(nxt,C.reps.length-1)];
     const ls=j=>C.last&&C.last.sets[j];
     const chip=(s,j)=>{const l=ls(j);let cls="";if(l){cls=s[0]>l[0]||(s[0]===l[0]&&s[1]>l[1])?"up":s[0]===l[0]&&s[1]===l[1]?"eq":"dn"}else if(C.reps[j]&&s[1]>=C.reps[j])cls="up";const isPr=s[0]>0&&e1(s[0],s[1])>bestOf(n,ui.date,j).e+0.05&&bestOf(n,ui.date,j).e>0;return `<span class="chip ${cls} ${ui.newSet===n+"|"+j?"new":""}">${isPr?"🏆 ":""}${kgs(s[0])} × ${s[1]}<button data-a="rmset" data-n="${esc(n)}" data-j="${j}" aria-label="Remove set">✕</button></span>`};
@@ -630,6 +630,7 @@ function vGym(){
     <div class="addrow" style="margin-top:10px"><input id="newex" placeholder="Add another exercise" aria-label="Exercise name"><button data-a="addex">Add</button></div>
     <p class="mut sm">Green chip: beat last time · grey: matched · red: under. Bodyweight moves: log 0 kg.</p>
   </section>
+  ${gymAgent()}
   ${aiRv("train")}
   <section class="card"><h2>History</h2>${hist.length?hist.map(w=>`<details><summary>${nice(w.d)} · ${esc((state.plan[w.s]||{name:w.s==="custom"?"Custom":w.s}).name)}</summary>${w.ex.map(e=>`<div class="row"><span class="grow">${esc(e.n)}</span><span class="r mut sm">${e.sets.length?setsTxt(e.sets):esc(e.note||"")}</span></div>`).join("")}</details>`).join(""):`<p class="mut">Past sessions show up here.</p>`}</section>`;
 }
@@ -1120,6 +1121,57 @@ function aiRv(kind){const key=GK(),T=RVK[kind][0];
    <details style="margin-top:8px"><summary class="sm">Wins and fixes</summary>${li("✅ Going well",r.wins)}${li("⚠️ Fix",r.fixes)}</details>
    <div class="exh" style="margin-top:10px"><span class="mut sm">Updated ${new Date(R.at).toLocaleString("en-GB",{weekday:"short",hour:"2-digit",minute:"2-digit"})}${R.h!==h?" · new data since":""}</span><button class="ghost" data-a="rvgo" data-k="${kind}" ${busy?"disabled":""} style="min-height:34px;padding:4px 12px">↻ Refresh</button></div>`
   :busy?"":`<button class="pri wide" style="margin-top:8px" data-a="rvgo" data-k="${kind}">Analyze</button>`}</section>`}
+const GYMEQ={uni:"Uni gym (GUC): free weights, benches, barbells, dumbbells in 2 kg steps, common machines. NO pec deck / fly machine and NO cable crossover or cable fly station.",other:"Other gym: full equipment incl. cable stations, cable crossover and pec deck / fly machine. Dumbbells in 2.5 kg steps but there is no 27.5 kg pair (25 then 30)."};
+let gaBusy=0;
+function gaCtx(){const S=state.settings,g=S.gym||"uni",key=sessKey(),P=state.plan[key]||{name:key,ex:[]},SK=((state.skip||{})[ui.date])||[],W=curW(),o=[];
+  o.push(`DATE: ${ui.date} (${pd(ui.date).toDateString()}). Session: ${P.name}. Gym today: ${GYMS[g]}. ${GYMEQ[g]} Dumbbells available here (kg): ${dbs().join(", ")||"unknown"}.`);
+  o.push("TODAY'S PLAN (current name | planned name | target | last time | alternatives that train the same muscle):");
+  for(const e of exFor(P,ui.date)){const n=e[0],orig=e[2]||e[0],H=histOf(n,ui.date).slice(0,3),G=altGroup(n)||altGroup(orig);o.push(`- ${n} | ${orig} | ${e[1]||""} | ${H.map(h=>`${h.d}: ${setsTxt(h.sets)}`).join("; ")||"no history"} | ${G?G[0]+": "+G[2].join(", "):"-"}${SK.includes(norm(orig))||SK.includes(norm(n))?" | SKIPPED TODAY":""}`)}
+  if(W)o.push("LOGGED TODAY: "+W.ex.filter(e=>e.sets.length).map(e=>`${e.n} ${setsTxt(e.sets)}`).join("; "));
+  o.push("WEEKLY SPLIT: "+Object.entries(state.plan).map(([k,p])=>`${k}=${p.name}: ${p.ex.map(e=>e[0]).join(", ")}`).join(" | "));
+  o.push("LAST 10 DAYS OF TRAINING: "+state.workouts.filter(w=>w.d<ui.date&&w.d>=ymd(new Date(pd(ui.date)-10*DAY))).sort((a,b)=>a.d.localeCompare(b.d)).map(w=>`${w.d} ${(state.plan[w.s]||{name:w.s}).name}: ${w.ex.filter(e=>e.sets.length).map(e=>e.n).join(", ")}`).join(" | "));
+  const R=recovery(ui.date),h=hkD(ui.date);if(R)o.push(`RECOVERY: ${R.sc}/100 (${R.lv[0]}). ${R.why.join(", ")}.`);if(h.sleep)o.push(`SLEEP LAST NIGHT: ${h.sleep} h (deep ${h.deep??"?"} min, REM ${h.rem??"?"} min).`);
+  const pref=(state.coach||{}).gymNotes;if(pref)o.push("THINGS KARIM TOLD YOU BEFORE: "+pref);
+  return o.join("\n")}
+async function gymAsk(q){if(gaBusy||!q)return;if(!GK()){toast("Add your Gemini key in Progress → Photos → AI coach first","warn");return}
+  state.coach=state.coach||{reports:[]};const C=state.coach.gchat=state.coach.gchat||[];C.push({r:"u",t:q,d:ui.date});gaBusy=1;render();
+  const hist=C.slice(-8,-1).map(m=>(m.r==="u"?"Karim: ":"Coach: ")+m.t).join("\n");
+  const pr=`You are Karim's personal strength coach inside his gym tracker. He trains for muscle while cutting, on a 4-day Arnold-style split. Talk like a knowledgeable gym friend: short, direct, specific. Use his real exercise names, weights and history.
+You can change his workout. Propose changes as actions; he taps to apply them.
+Rules:
+- Only suggest exercises he can do at the gym he's at today (see equipment). Never suggest cable or pec-deck moves at the uni gym.
+- Swaps must train the same muscle. Prefer the listed alternatives, but you may suggest others.
+- For dumbbell moves, only use weights from the available dumbbells list.
+- Pain or injury: never diagnose. Swap to moves that don't load or provoke the sore area, suggest lighter loads, and tell him to stop any move that causes sharp pain. If pain is sharp, shooting, causes numbness, or lasts more than a few days, tell him to see a doctor or physiotherapist.
+- "from" must be exactly an exercise name from TODAY'S PLAN (current name column).
+- scope: "today" = just this session; "gym" = always at this gym; "always" = change the plan permanently. Default to "today" for pain and one-offs.
+Return JSON only: {"reply": "your message, under 90 words, plain text", "actions": [{"type":"swap","from":"...","to":"...","scope":"today","why":"short reason"} | {"type":"add","name":"...","target":"3×10–12","why":"..."} | {"type":"skip","name":"...","why":"..."}], "remember": "optional: a lasting fact he told you (e.g. an injury or preference) worth remembering for future sessions, else empty"}
+Use an empty actions list when he only asks a question.
+
+CONTEXT:
+${gaCtx()}
+${hist?"\nEARLIER IN THIS CHAT:\n"+hist:""}
+
+KARIM: ${q}`;
+  const keepE=ui.aiLastErr;
+  try{const t=await gemCall([{text:pr}],1);const r=JSON.parse(t.replace(/^```(json)?|```$/g,"").trim());C.push({r:"a",t:r.reply||"",acts:(r.actions||[]).filter(a=>a&&a.type).slice(0,6).map(a=>({...a,done:0})),d:ui.date});
+    if(r.remember&&String(r.remember).trim()){const N=state.coach.gymNotes||"";state.coach.gymNotes=(N+" • "+String(r.remember).trim()).slice(-600)}
+    if(C.length>40)C.splice(0,C.length-40);gaBusy=0;commit()}
+  catch(e){ui.aiLastErr=keepE;C.push({r:"a",t:"⚠️ "+aiErr(e),acts:[],d:ui.date});gaBusy=0;commit()}}
+function gaApply(mi,ai){const C=((state.coach||{}).gchat)||[],m=C[mi],a=m&&m.acts&&m.acts[ai];if(!a||a.done)return;const P=state.plan[sessKey()]||{ex:[]};
+  const L=exFor(P,ui.date),find=n=>L.find(e=>norm(e[0])===norm(n||""))||L.find(e=>norm(e[2]||"")===norm(n||""));
+  if(a.type==="swap"){const e=find(a.from);if(!e){toast(`Can't find ${esc(a.from)} in today's plan`,"warn");return}ui.swo=e[2]||e[0];ui.swPerm=a.scope==="gym"?2:a.scope==="always"&&state.plan[sessKey()]?1:0;a.done=1;doSwap(a.to);return}
+  if(a.type==="add"){const W=ensureW();if(!W.ex.some(x=>norm(x.n)===norm(a.name)))W.ex.push({n:a.name,sets:[],tg:a.target||""});a.done=1;toast(`Added ${esc(a.name)}`,"good");commit();return}
+  if(a.type==="skip"){const e=find(a.name);const k=norm(e?(e[2]||e[0]):a.name);state.skip=state.skip||{};const S=state.skip[ui.date]=state.skip[ui.date]||[];if(!S.includes(k))S.push(k);a.done=1;toast(`Skipping ${esc(a.name)} today`,"good");commit();return}}
+function gymAgent(){const C=((state.coach||{}).gchat||[]).map((m,i)=>[m,i]).filter(([m])=>m.d===ui.date),SK=((state.skip||{})[ui.date])||[];
+  const lab=a=>a.type==="swap"?`⇄ ${esc(a.from)} → <b>${esc(a.to)}</b>${a.scope&&a.scope!=="today"?` <span class="tag">${a.scope==="gym"?"always at this gym":"permanent"}</span>`:""}`:a.type==="add"?`＋ Add <b>${esc(a.name)}</b>${a.target?" · "+esc(a.target):""}`:`⤼ Skip <b>${esc(a.name)}</b> today`;
+  return`<section class="card"><div class="exh"><h2 style="margin:0">🤖 Gym coach</h2>${C.length?`<button class="ghost" data-a="gaclr" style="min-height:32px;padding:4px 10px">Clear</button>`:""}</div>
+  ${C.length?C.slice(-8).map(([m,i])=>m.r==="u"?`<p class="sm" style="margin:10px 0 0;text-align:right"><span style="display:inline-block;background:var(--soft);padding:8px 12px;border-radius:14px 14px 4px 14px;max-width:85%;text-align:left">${esc(m.t)}</span></p>`
+    :`<div class="sm" style="margin:8px 0 0"><div style="display:inline-block;padding:8px 12px;border-radius:14px 14px 14px 4px;border:1px solid var(--line,#8883);max-width:92%">${esc(m.t)}</div>${(m.acts||[]).length?`<div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">${m.acts.map((a,j)=>`<button class="${a.done?"ghost":"pri"}" data-a="gaapply" data-m="${i}" data-j="${j}" ${a.done?"disabled":""} style="text-align:left;min-height:40px;white-space:normal;line-height:1.35;height:auto;padding:8px 12px">${a.done?"✓ ":""}${lab(a)}${a.why?`<span class="mut sm" style="display:block;font-weight:400">${esc(a.why)}</span>`:""}</button>`).join("")}${m.acts.filter(a=>!a.done).length>1?`<button class="ghost" data-a="gaall" data-m="${i}">Apply all</button>`:""}</div>`:""}</div>`).join("")
+   :`<p class="mut sm">Tell me how you feel or what you want to change. Examples:</p><div class="chips">${["My lower back is sore from yesterday, change the deadlift","Give me another chest exercise instead of flys","I only have 40 minutes today","Make today harder"].map(x=>`<button class="ghost" data-a="gaq" data-k="${esc(x)}" style="font-size:13px">${esc(x)}</button>`).join("")}</div>`}
+  ${gaBusy?`<p class="sm" style="margin:10px 0 0">⏳ Coach is thinking…</p>`:""}
+  <div class="addrow" style="margin-top:10px"><input id="gaq" placeholder="Ask your gym coach" aria-label="Message to gym coach" autocomplete="off"><button class="pri" data-a="gago" ${gaBusy?"disabled":""}>Send</button></div>
+  ${SK.length?`<p class="mut sm" style="margin-top:8px">Skipped today: ${SK.map(esc).join(", ")} · <button class="lnk" data-a="gaunskip">undo</button></p>`:""}</section>`}
 async function phPlay(){const pose=ui.php||"front",L=phs().filter(p=>p.pose===pose);if(L.length<2)return;sheet(`<h2>▶ ${POSES.find(p=>p[0]===pose)[1]} timelapse</h2><div class="phcmp one"><img id="tlimg" alt="Timelapse frame"></div><p style="text-align:center;margin:8px 0"><b id="tld"></b></p>`);
   const U=[];for(const p of L)U.push([await phURL(p.id),p.d,p]);let i=0;const im=document.getElementById("tlimg"),dl=document.getElementById("tld");const step=()=>{if(!document.getElementById("tlimg"))return;const[u,d,pp]=U[i%U.length];if(u){im.src=u;im.style.transform=tfT(pp.tf)}dl.textContent=nice(d)+(i%U.length===U.length-1?" · now":"");i++;setTimeout(step,i%U.length===0?1600:700)};step()}
 async function phShare(){const pose=ui.php||"front",D=phDates(pose);let a=ui.pha&&D.includes(ui.pha)?ui.pha:D[0],b=ui.phb&&D.includes(ui.phb)?ui.phb:D[D.length-1];if(a>b)[a,b]=[b,a];
@@ -1421,6 +1473,12 @@ document.addEventListener("click",e=>{
   else if(a==="gemsave"){const k=((document.getElementById("gemk")||{}).value||"").trim();if(!k)return;try{localStorage.setItem("trk-gem",k);localStorage.removeItem("trk-gem-ml-flash");localStorage.removeItem("trk-gem-ml-pro")}catch(e){}toast("Key saved on this phone","good");render();if(phs().length)aiAnalyze()}
   else if(a==="gemclr"){try{localStorage.removeItem("trk-gem");localStorage.removeItem("trk-gem-m-flash");localStorage.removeItem("trk-gem-m-pro")}catch(e){}render()}
   else if(a==="aigo"){ui.aiLastErr="";aiAnalyze()}
+  else if(a==="gago"){const el=document.getElementById("gaq"),q=(el&&el.value||"").trim();if(q)gymAsk(q)}
+  else if(a==="gaq")gymAsk(b.dataset.k);
+  else if(a==="gaapply")gaApply(+b.dataset.m,+b.dataset.j);
+  else if(a==="gaall"){const m=((state.coach||{}).gchat||[])[+b.dataset.m];if(m)m.acts.forEach((_,j)=>gaApply(+b.dataset.m,j))}
+  else if(a==="gaclr"){state.coach.gchat=(state.coach.gchat||[]).filter(m=>m.d!==ui.date);commit()}
+  else if(a==="gaunskip"){if(state.skip)delete state.skip[ui.date];commit()}
   else if(a==="rvgo"){rvTried[b.dataset.k]=null;aiReview(b.dataset.k)}
   else if(a==="gemtier"){try{localStorage.setItem("trk-gem-t",b.dataset.k)}catch(e){}render()}
   else if(a==="aiask"){const q=((document.getElementById("aiq")||{}).value||"").trim();if(q)aiAsk(q)}
@@ -1521,6 +1579,7 @@ document.addEventListener("submit",e=>{e.preventDefault();const f=e.target,v=n=>
 });
 document.addEventListener("toggle",e=>{const d=e.target;if(d.dataset&&d.dataset.d){ui.op[d.dataset.d]=d.open;saveUI()}},true);
 window.addEventListener("scroll",()=>{if(document.querySelector(".tipg")){clearTimeout(tipT);tipT=setTimeout(clearTips,400)}},{passive:true});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target&&e.target.id==="gaq"){e.preventDefault();const q=e.target.value.trim();if(q)gymAsk(q)}});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")cloudPull();if(document.visibilityState==="visible"&&ui.hkPend&&Date.now()-ui.hkPend<600000){render();const b=document.querySelector(".watch");if(b&&ui.tab==="today")b.scrollIntoView({behavior:"smooth",block:"center"});toast("Shortcut done? Tap ✓ to finish syncing","good")}});
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS[h]&&h!==ui.tab){ui.tab=h;ui.msg="";ui.enter=1;render();window.scrollTo(0,0)}});
 try{if(!state.achInit)checkAch()}catch(e){}
@@ -1530,7 +1589,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22b";
+const BUILD="2026-11-22c";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
