@@ -1871,6 +1871,7 @@ try{state.seeded=state.seeded||[];if(!state.seeded.includes("skillet5")){const r
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("skilletpaste")){if(!state.ing.some(x=>x.n==="Tomato paste"))state.ing.push({id:uid(),cat:"Sauces",n:"Tomato paste",k:82,p:4.3,c:19,f:0.5});const r=(state.recipes||[]).find(x=>x.n==="Potato beef skillet");if(r){const i=r.items.find(x=>/marinara|pasta sauce/i.test(x.n));if(i){i.n="Tomato paste";i.g=16}else r.items.push({n:"Tomato paste",g:16})}state.seeded.push("skilletpaste")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("choccereal1122")){let f=state.foods.find(x=>/chocolate cream.*cereal/i.test(x.n));if(!f){f={id:uid(),n:"Chocolate cream-filled cereal",u:"1 cup (65 g)",k:280,p:4,c:45,f:10};state.foods.unshift(f)}const d="2026-11-22";(state.logs[d]=state.logs[d]||[]).push({id:uid(),n:f.n,k:280,p:4,c:45,f:10,q:1});state.seeded.push("choccereal1122")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("realcereal")){const N="Real chocolate cream-filled cereal";(state.foods||[]).forEach(x=>{if(x.n==="Chocolate cream-filled cereal")x.n=N});(state.logs["2026-11-22"]||[]).forEach(x=>{if(x.n==="Chocolate cream-filled cereal")x.n=N});state.seeded.push("realcereal")}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("chocobites")){const O="Real chocolate cream-filled cereal",N="Real Choco Bites (filled cereal)";(state.foods||[]).forEach(x=>{if(x.n===O)x.n=N});(state.logs["2026-11-22"]||[]).forEach(x=>{if(x.n===O)x.n=N});state.seeded.push("chocobites")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1879,7 +1880,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-23q";
+const BUILD="2026-11-23r";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
