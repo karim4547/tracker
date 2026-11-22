@@ -422,7 +422,7 @@ function vHabits(){const S=state.settings,h=habD(),w=(h.w||0)*0.25;
   </div></section>`}
 function hashS(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)}
 function questsFor(d){
-  const S=state.settings,L=state.logs[d]||[],t=tot(L),h=(state.hab||{})[d]||{},W=state.workouts.find(w=>w.d===d),sets=W?W.ex.reduce((a,e)=>a+e.sets.length,0):0,train=!!state.plan[wkKey(pd(d).getDay())];
+  const S=state.settings,L=state.logs[d]||[],t=tot(L),h=(state.hab||{})[d]||{},W=state.workouts.find(w=>w.d===d),sets=W?W.ex.reduce((a,e)=>a+scnt(e),0):0,train=!!state.plan[wkKey(pd(d).getDay())];
   const beat=W?W.ex.some(e=>{const l=histOf(e.n,d)[0];return l&&e.sets.some((s,j)=>{const q=l.sets[j];return q&&(s[0]>q[0]||(s[0]===q[0]&&s[1]>q[1]))})}):false;
   const P=[
    ["p","🥩",`Hit ${S.protein} g protein`,Math.min(1,t.p/S.protein),`${fmt(t.p)}/${S.protein} g`],
@@ -576,6 +576,7 @@ function tcoach(n,tg,H){const sec=+((String(tg||"").match(/(\d+)\s*(?:s|sec)/i)|
 const isUni=n=>/single[- ]?(leg|arm)|one[- ]?(arm|leg)|unilateral|bulgarian|split squat|step-?up|pistol|kickback|side plank|lateral lunge|reverse lunge/i.test(n||"");
 const sideOf=(n,k)=>((k+((ui.sf||{})[norm(n)]?1:0))%2===0)?"L":"R";
 const SIDE={L:"Left",R:"Right"};
+const scnt=e=>isUni(e.n)?Math.ceil(e.sets.length/2):e.sets.length;
 const cntOf=n=>{const W=curW(),e=W&&W.ex.find(x=>norm(x.n)===norm(n));return e?e.sets.length:0};
 function uniC(n,C){if(!isUni(n)||!C)return C;const R={...C.R,n:C.R.n*2},reps=[];for(const r of C.reps)reps.push(r,r);while(reps.length<R.n)reps.push(reps[reps.length-1]??R.lo);return{...C,R,reps,why:C.why+" One set = left and right. Holds run both legs back to back with 5 s to switch."}}
 function coach(n,tg,H){return uniC(n,coach0(n,tg,H))}
@@ -608,7 +609,7 @@ function startRest(){if(ui.skipRest){ui.skipRest=0;setTimeout(()=>toast("Now the
 function tickRest(){let el=document.getElementById("rest");const left=Math.ceil(((ui.restEnd||0)-Date.now())/1000);if(left<=0){if(el){el.classList.remove("show");if(ui.restEnd){toast("⏱ Rest's over. Next set!","good");try{navigator.vibrate&&navigator.vibrate([150,80,150])}catch(e){}}}ui.restEnd=0;clearInterval(restI);return}
   if(!el){el=document.createElement("div");el.id="rest";el.innerHTML=`<div class="rt"><b id="rtn"></b><span class="mut sm">rest</span></div><div class="rbar"><i id="rtb"></i></div><button data-a="rest15">+15 s</button><button data-a="restx">Skip</button>`;document.body.appendChild(el)}
   el.classList.add("show");document.getElementById("rtn").textContent=Math.floor(left/60)+":"+z(left%60);document.getElementById("rtb").style.width=(left/state.settings.rest*100)+"%"}
-function logSet(n,w,r,tg){const W=ensureW();if(!W.t0)W.t0=Date.now();let ex=W.ex.find(x=>norm(x.n)===norm(n));if(!ex){ex={n,sets:[]};W.ex.push(ex)}const C=coach(ex.n,tg||"",histOf(ex.n,ui.date));const pr=react(ex.n,w,r,ex.sets.length,C);ex.sets.push(isUni(ex.n)?[w,r,sideOf(ex.n,ex.sets.length)]:[w,r]);ui.skipRest=isUni(ex.n)&&ex.sets.length%2===1;ui.newSet=ex.n+"|"+(ex.sets.length-1);W.t1=Date.now();if(W.ex.reduce((a,e)=>a+e.sets.length,0)===1&&(!W.t0||W.t1-W.t0>15*6e4))W.t0=W.t1-3*6e4;sfx("set");return C}
+function logSet(n,w,r,tg){const W=ensureW();if(!W.t0)W.t0=Date.now();let ex=W.ex.find(x=>norm(x.n)===norm(n));if(!ex){ex={n,sets:[]};W.ex.push(ex)}const C=coach(ex.n,tg||"",histOf(ex.n,ui.date));const pr=react(ex.n,w,r,ex.sets.length,C);ex.sets.push(isUni(ex.n)?[w,r,sideOf(ex.n,ex.sets.length)]:[w,r]);ui.skipRest=isUni(ex.n)&&ex.sets.length%2===1;ui.newSet=ex.n+"|"+(ex.sets.length-1);W.t1=Date.now();if(W.ex.reduce((a,e)=>a+scnt(e),0)===1&&(!W.t0||W.t1-W.t0>15*6e4))W.t0=W.t1-3*6e4;sfx("set");return C}
 function wmList(){const key=sessKey(),P=state.plan[key]||{ex:[]},PX=exFor(P,ui.date),W=curW(),names=PX.map(e=>e[0]),extra=W?W.ex.map(e=>e.n).filter(n=>!names.some(x=>norm(x)===norm(n))):[];return[...PX.map(e=>[e[0],((W&&W.ex.find(x=>norm(x.n)===norm(e[0])))||{}).tg||e[1]]),...extra.map(n=>[n,((W.ex.find(e=>norm(e.n)===norm(n)))||{}).tg||""])]}
 function openWM(){if(!wmList().length){toast("Add an exercise first","warn");return}ui.wm={i:0,st:Date.now()};const L=wmList(),W=curW();const k=L.findIndex(([n,tg])=>{const d=W&&W.ex.find(e=>norm(e.n)===norm(n));return!d||d.sets.length<coach(n,tg,[]).R.n});ui.wm.i=Math.max(0,k);const W2=ensureW();if(!W2.t0||!W2.ex.some(e=>e.sets.length))W2.t0=Date.now();ui.wmw=null;ui.wmr=null;renderWM()}
 function wmLog(n,tg,w,r){const L=wmList();logSet(n,w,r,tg);const ns=ui.newSet;commit();ui.newSet=ns;const W=curW(),d=W.ex.find(e=>norm(e.n)===norm(n)),need=coach(n,tg,[]).R.n;if(d.sets.length>=need&&ui.wm.i<L.length-1){ui.wm.i++;ui.wmw=null;toast(`✓ ${esc(n)} done. Next: ${esc(L[ui.wm.i][0])}`,"good")}renderWM();ui.newSet=null;startRest()}
@@ -630,7 +631,7 @@ function renderWM(){
   ${isUni(n)&&ds.length<C.R.n?`<button class="ghost" data-a="side" data-n="${esc(n)}" style="width:100%;margin-top:8px">⇄ Do ${SIDE[sideOf(n,ds.length)==="L"?"R":"L"].toLowerCase()} side first</button>`:""}<div class="wmnav"><button data-a="wmnav" data-d="-1" ${i?"":"disabled"}>‹ Previous</button><button data-a="wmnav" data-d="1">${i<L.length-1?"Next ›":"Finish ✓"}</button></div></div>`;
 }
 function wmSummary(){
-  const W=curW()||{ex:[]},sets=W.ex.reduce((a,e)=>a+e.sets.length,0),vol=W.ex.reduce((a,e)=>a+e.sets.reduce((b,t)=>b+t[0]*t[1],0),0),min=Math.max(1,Math.round(((W.t1||Date.now())-(W.t0||Date.now()))/60000));
+  const W=curW()||{ex:[]},sets=W.ex.reduce((a,e)=>a+scnt(e),0),vol=W.ex.reduce((a,e)=>a+e.sets.reduce((b,t)=>b+t[0]*t[1],0),0),min=Math.max(1,Math.round(((W.t1||Date.now())-(W.t0||Date.now()))/60000));
   let beat=0,prs=[];for(const e of W.ex){const H=histOf(e.n,ui.date),l=H[0];e.sets.forEach((s,j)=>{const q=l&&l.sets[j];if(q&&(s[0]>q[0]||(s[0]===q[0]&&s[1]>q[1])))beat++});const be=bestOf(e.n,ui.date,0).e,top=Math.max(0,...e.sets.map(s=>e1(s[0],s[1])));if(be>0&&top>be+0.05)prs.push([e.n,top-be])}
   const mus={};for(const e of W.ex)if(e.sets.length){const m=musc(e.n);mus[m]=(mus[m]||0)+e.sets.length}
   const xp=sets*2+20+prs.length*25;
@@ -851,7 +852,7 @@ const stepsOf=d=>{const h=hkD(d);return h.steps??((state.hab||{})[d]||{}).st??0}
 function bossWeek(ws){const S=state.settings,key=ymd(ws),b=BOSSES[hashS("boss"+key)%BOSSES.length],td=ymd(new Date()),hits=[];
   for(let i=0;i<7;i++){const x=new Date(ws);x.setDate(x.getDate()+i);const d=ymd(x);if(d>td)break;
     const L=state.logs[d]||[],t=tot(L),h=(state.hab||{})[d]||{},W=state.workouts.find(w=>w.d===d&&w.ex.some(e=>e.sets.length)),Q=questsFor(d),qc=Q.filter(q=>q.done).length,add=(ic,txt,dmg)=>hits.push({d,ic,txt,dmg});
-    if(W){const n=W.ex.reduce((a,e)=>a+e.sets.length,0);add("🏋️",`Workout · ${n} sets`,100+2*n)}
+    if(W){const n=W.ex.reduce((a,e)=>a+scnt(e),0);add("🏋️",`Workout · ${n} sets`,100+2*n)}
     if(L.length&&t.p>=S.protein)add("🥩","Protein goal",40);
     if(L.length&&t.k>=S.kMin&&t.k<=S.kMax)add("🎯","Calories on target",40);
     if(stepsOf(d)>=S.steps)add("👟","Step goal",60);
@@ -889,7 +890,7 @@ function heatmap(){const td=new Date();td.setHours(0,0,0,0);const end=wkStart(td
 const MCOL=["var(--soft)","#3b5998","#2f7fd8","#1d9448","#e0a200","#d7262e"];
 function muscleMap(){
   const mode=ui.mm||"sets",td=new Date();td.setHours(0,0,0,0);const cut=ymd(new Date(Date.now()-7*DAY));
-  const sets={Chest:0,Back:0,Shoulders:0,Arms:0,Legs:0},last={};for(const w of state.workouts)for(const e of w.ex)if(e.sets.length){const m=musc(e.n);if(!(m in sets))continue;if(w.d>cut)sets[m]+=e.sets.length;if(!last[m]||w.d>last[m])last[m]=w.d}
+  const sets={Chest:0,Back:0,Shoulders:0,Arms:0,Legs:0},last={};for(const w of state.workouts)for(const e of w.ex)if(e.sets.length){const m=musc(e.n);if(!(m in sets))continue;if(w.d>cut)sets[m]+=scnt(e);if(!last[m]||w.d>last[m])last[m]=w.d}
   const rt={};for(const x of liftData())if(x.r)(rt[x.m]=rt[x.m]||[]).push(x.r.overall);
   const col=m=>{if(mode==="sets"){const n=sets[m];return n===0?MCOL[0]:n<5?"#3b5998":n<10?"#2f7fd8":n<=20?"#1d9448":"#e0a200"}if(mode==="ready"){if(!last[m])return MCOL[0];const d=Math.round((td-pd(last[m]))/DAY);return d<=1?"#d7262e":d<=3?"#1d9448":d<=6?"#e0a200":"#8b5cf6"}const v=rt[m];if(!v)return MCOL[0];return LV[Math.min(4,Math.floor(v.reduce((a,b)=>a+b,0)/v.length*4+1e-4))][1]};
   const P=(m,d)=>`<path d="${d}" fill="${col(m)}" data-a="mmus" data-m="${m}" class="mz"/>`;
@@ -1058,18 +1059,22 @@ async function gfetch(url,body,ms){const key=GK(),ac=new AbortController(),to=se
 async function gemModels(tier){const ck="trk-gem-ml-"+tier;try{const c=JSON.parse(localStorage.getItem(ck)||"null");if(c&&c.t>Date.now()-86400000&&c.m.length)return c.m}catch(e){}
   const J=await gfetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200",null,30000),M=(J.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace("models/","")).filter(n=>/^gemini-\d/.test(n)&&!/(embed|tts|image|audio|live|exp|learnlm|nano|robotics|computer|customtools)/.test(n));
   const ver=n=>parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/)||[])[1]||0),score=n=>ver(n)*10+(n.includes(tier)?5:0)+(/flash/.test(n)?2:0)-(/lite/.test(n)?6:0)-(/preview/.test(n)?0.5:0)-(/-\d{2,}/.test(n.replace(/gemini-\d+(\.\d+)?/,""))?0.2:0);
-  const m=M.sort((a,b)=>score(b)-score(a)).slice(0,5);if(!m.length)throw new Error("nomodel");try{localStorage.setItem(ck,JSON.stringify({t:Date.now(),m}))}catch(e){}return m}
+  const m=M.sort((a,b)=>score(b)-score(a)).slice(0,8);if(!m.length)throw new Error("nomodel");try{localStorage.setItem(ck,JSON.stringify({t:Date.now(),m}))}catch(e){}return m}
 const nap=ms=>new Promise(r=>setTimeout(r,ms));
-async function gemCall(parts,json){if(!GK())throw new Error("nokey");const tiers=GT()==="pro"?["pro","flash"]:["flash"];let last=null;
-  for(const tier of tiers){const L=await gemModels(tier);
-    for(const m of L){if(tier==="flash"&&/pro/.test(m))continue;
+const gReset=()=>{const d=new Date();d.setUTCHours(8,0,0,0);if(d<=new Date())d.setUTCDate(d.getUTCDate()+1);return d.getTime()};
+const gX=()=>{try{const o=JSON.parse(localStorage.getItem("trk-gem-x")||"{}"),n=Date.now();for(const k in o)if(o[k]<n)delete o[k];return o}catch(e){return{}}};
+const gXset=m=>{try{const o=gX();o[m]=gReset();localStorage.setItem("trk-gem-x",JSON.stringify(o))}catch(e){}};
+async function gemCall(parts,json,lite){if(!GK())throw new Error("nokey");const tiers=GT()==="pro"&&!lite?["pro","flash"]:["flash"];let last=null,tried=0;
+  for(const tier of tiers){let L=await gemModels(tier);const X=gX();L=L.filter(m=>!X[m]);if(lite)L=[...L.filter(m=>/lite/.test(m)),...L.filter(m=>!/lite/.test(m))];
+    for(const m of L){if(tier==="flash"&&/pro/.test(m))continue;tried++;
       for(let a=0;a<2;a++){aiStep(`Asking Gemini (${m})${a?" again":""}…`);
         try{const J=await gfetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`,{contents:[{role:"user",parts}],generationConfig:{temperature:.4,...(json?{responseMimeType:"application/json"}:{})}});
           const t=((((J.candidates||[])[0]||{}).content||{}).parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");if(!t){const er=new Error("http");er.gm="Gemini returned an empty answer ("+(((J.candidates||[])[0]||{}).finishReason||(J.promptFeedback||{}).blockReason||"no reason")+").";throw er}return t}
         catch(e){last=e;const busy=e.st===503||e.st===500||e.st===502||e.st===504||e.message==="timeout";
           if(busy&&a===0){aiStep(`Gemini is busy, retrying in 3 s…`);await nap(3000);continue}
-          if(busy||e.message==="rate"||e.message==="model"||(e.st===400&&/quota|billing|free/i.test(e.gm||""))){if(e.message==="model")try{localStorage.removeItem("trk-gem-ml-"+tier)}catch(_){}aiStep("Trying another Gemini model…");break}
+          if(busy||e.message==="rate"||e.message==="model"||(e.st===400&&/quota|billing|free/i.test(e.gm||""))){if(e.message==="rate"&&/quota|per day|exceeded/i.test(e.gm||""))gXset(m);if(e.message==="model")try{localStorage.removeItem("trk-gem-ml-"+tier)}catch(_){}aiStep("Trying another Gemini model…");break}
           throw e}}}}
+  if(!tried||(last&&last.message==="rate")){const er=new Error("quota");er.gm="";throw er}
   if(last&&(last.st>=500||last.message==="timeout")){const er=new Error("busy");er.st=last.st;er.gm=last.gm;throw er}throw last||new Error("nomodel")}
 function aiStep(t){ui.aiStepT=t;const el=document.getElementById("aistep");if(el)el.textContent="⏳ "+t}
 async function img64(id,max=640){const u=await phURL(id);if(!u)return null;const im=new Image();im.src=u;await im.decode();const s=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");c.width=Math.round(im.naturalWidth*s);c.height=Math.round(im.naturalHeight*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.82).split(",")[1]}
@@ -1077,7 +1082,7 @@ const AIA=[["leanness","Leanness"],["shoulders","Shoulders"],["arms","Arms"],["c
 let aiBusy=0,aiTimer=null;
 function aiSoon(){if(!GK())return;clearTimeout(aiTimer);aiTimer=setTimeout(()=>aiAnalyze(),2500)}
 function aiErr(e){const m=e&&e.message,g=e&&e.gm?` Google says: "${String(e.gm).slice(0,180)}"`:"";ui.aiLastErr=(e&&e.st?"HTTP "+e.st+". ":"")+(e&&e.gm||m||"");
-  return m==="busy"?"Google's Gemini servers are overloaded right now. It usually clears in a few minutes; try again then.":m==="nokey"?"Add your Gemini key first.":m==="rate"?"Gemini's free limit was hit. Wait a minute, or switch the model to Flash."+g:m==="model"?"That model isn't available to your key. Tap Analyze again."+g:m==="timeout"?"Gemini took too long. Tap Analyze to try again.":m==="net"?"Couldn't connect to Google. Check your internet."+g:m==="nomodel"?"Your key has no Gemini models enabled.":(e&&e.st===400||e&&e.st===401||e&&e.st===403)?"Google rejected the request (HTTP "+e.st+")."+g:"Something went wrong ("+(e&&e.st?"HTTP "+e.st:m)+")."+g}
+  return m==="quota"?`You've used today's free Gemini allowance on every model. It resets around ${new Date(gReset()).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}. Your last results stay on screen until then.`:m==="busy"?"Google's Gemini servers are overloaded right now. It usually clears in a few minutes; try again then.":m==="nokey"?"Add your Gemini key first.":m==="rate"?"Gemini's free limit was hit. Wait a minute, or switch the model to Flash."+g:m==="model"?"That model isn't available to your key. Tap Analyze again."+g:m==="timeout"?"Gemini took too long. Tap Analyze to try again.":m==="net"?"Couldn't connect to Google. Check your internet."+g:m==="nomodel"?"Your key has no Gemini models enabled.":(e&&e.st===400||e&&e.st===401||e&&e.st===403)?"Google rejected the request (HTTP "+e.st+")."+g:"Something went wrong ("+(e&&e.st?"HTTP "+e.st:m)+")."+g}
 async function aiAnalyze(){if(aiBusy)return;const dates=[...new Set(phs().map(p=>p.d))];if(!dates.length)return;aiBusy=1;render();
   try{const cur=dates[dates.length-1],base=dates[0],prev=dates.length>2?dates[dates.length-2]:null,want=[];
     const add=(d,tag)=>{for(const[p,l] of POSES){const x=phOf(p,d);if(x)want.push([x,`${tag} · ${l} · ${nice(d)}`])}};add(cur,"CURRENT");if(base!==cur)add(base,"BASELINE");if(prev&&prev!==base)add(prev,"PREVIOUS");
@@ -1148,11 +1153,11 @@ Return JSON only: {"headline": short verdict under 12 words, "score": integer 1-
 DATA:
 ${ctx}`;
   const keepE=ui.aiLastErr;
-  try{const t=await gemCall([{text:pr}],1);const r=JSON.parse(t.replace(/^```(json)?|```$/g,"").trim());state.coach=state.coach||{reports:[]};state.coach.rv=state.coach.rv||{};state.coach.rv[kind]={at:Date.now(),h,r};rvBusy=null;commit();if(!auto)sfx&&sfx("win")}
-  catch(e){const m=aiErr(e);ui.aiLastErr=keepE;ui.rvErr[kind]=m;rvBusy=null;if(e.message==="busy"||e.message==="rate")setTimeout(()=>{rvTried[kind]=null;render()},180000);render();if(!auto)toast(m,"warn")}}
+  try{const t=await gemCall([{text:pr}],1,auto);const r=JSON.parse(t.replace(/^```(json)?|```$/g,"").trim());state.coach=state.coach||{reports:[]};state.coach.rv=state.coach.rv||{};state.coach.rv[kind]={at:Date.now(),h,r};rvBusy=null;commit();if(!auto)sfx&&sfx("win")}
+  catch(e){const m=aiErr(e);ui.aiLastErr=keepE;ui.rvErr[kind]=m;rvBusy=null;if(e.message==="busy")setTimeout(()=>{rvTried[kind]=null;render()},180000);render();if(!auto)toast(m,"warn")}}
 function aiRv(kind){const key=GK(),T=RVK[kind][0];
   if(!key)return kind==="week"||kind==="day"?`<section class="card"><h2>🧠 AI review · ${T}</h2><p class="mut sm">Add your free Gemini key in Progress → Photos → AI coach, and every section gets its own AI review.</p></section>`:"";
-  const R=((state.coach||{}).rv||{})[kind],r=R&&R.r,h=hashS(kind+aiCtx()),stale=!R||(R.h!==h&&Date.now()-R.at>20*60000)||(kind==="day"&&ymd(new Date(R.at))!==ymd(new Date()));
+  const R=((state.coach||{}).rv||{})[kind],r=R&&R.r,h=hashS(kind+aiCtx()),stale=!R||ymd(new Date(R.at))!==ymd(new Date());
   if(stale&&!rvBusy&&!aiBusy&&rvTried[kind]!==h)setTimeout(()=>aiReview(kind,1),900);
   const li=(t,a,c)=>a&&a.length?`<p class="sm" style="margin:10px 0 2px"><b>${t}</b></p><ul class="sm" style="margin:0;padding-left:20px">${a.map(x=>`<li${c?` class="${c}"`:""}>${esc(x)}</li>`).join("")}</ul>`:"";
   const busy=rvBusy===kind,err=(ui.rvErr||{})[kind],sc=r&&+r.score,col=sc>=7?"var(--grn)":sc>=5?"var(--yel)":"var(--red)";
@@ -1537,9 +1542,9 @@ function vStats(part){
   const w0=wkStart(td),fw=state.workouts.map(w=>w.d).sort()[0],wspan=fw?Math.max(4,Math.min(S.rw,Math.round((w0-wkStart(pd(fw)))/(7*DAY))+1)):4;const wk=[];for(let i=wspan-1;i>=0;i--){const a=new Date(w0);a.setDate(a.getDate()-7*i);const b=new Date(a);b.setDate(b.getDate()+7);wk.push([ymd(a),ymd(b)])}
   const Wk=wk.map(([a,b])=>state.workouts.filter(w=>w.d>=a&&w.d<b&&w.ex.some(e=>e.sets.length)));
   G.ts={unit:"",line:S.planDays,vals:wk.map((w,i)=>[lab(w[0]),Wk[i].length,Wk[i].length>=S.planDays?"var(--grn)":"var(--blue)"])};
-  G.tv={unit:"sets",vals:wk.map((w,i)=>[lab(w[0]),Wk[i].reduce((a,x)=>a+x.ex.reduce((b,e)=>b+e.sets.length,0),0),"var(--blue)"])};
+  G.tv={unit:"sets",vals:wk.map((w,i)=>[lab(w[0]),Wk[i].reduce((a,x)=>a+x.ex.reduce((b,e)=>b+scnt(e),0),0),"var(--blue)"])};
   const cut=ymd(new Date(Date.now()-7*DAY)),mu={Chest:0,Back:0,Shoulders:0,Arms:0,Legs:0};
-  for(const w of state.workouts)if(w.d>cut)for(const e of w.ex){const m=musc(e.n);if(m in mu)mu[m]+=e.sets.length}
+  for(const w of state.workouts)if(w.d>cut)for(const e of w.ex){const m=musc(e.n);if(m in mu)mu[m]+=scnt(e)}
   const logged=T.filter(Boolean).slice(-7),avg=k=>logged.length?logged.reduce((a,t)=>a+t[k],0)/logged.length:0,hit=logged.filter(t=>t.p>=S.protein).length,inb=logged.filter(t=>t.k>=S.kMin&&t.k<=S.kMax).length;
   const card=(k,body)=>on(k)?`<section class="card"><h2>${CH[k]}</h2>${body}</section>`:"";
   const fig=k=>`<div class="fig"><svg data-g="${k}" role="img" aria-label="${CH[k]}"></svg></div>`;
@@ -1675,9 +1680,9 @@ document.addEventListener("click",e=>{
   else if(a==="aostep"){const st=ui.ao.u==="g"?5:0.5;ui.ao.amt=Math.max(st,r1((+ui.ao.amt||0)+st*+b.dataset.d));aoRefresh()}
   else if(a==="aoadd"){const t=aoTot(),x=ingOf(ui.ao.sel),e=(state.logs[ui.date]||[]).find(q=>q.id===ui.ao.id);if(!t||!e||!t.g)return;const q=e.q||1;e.k=r1(e.k+t.k/q);e.p=r1(e.p+t.p/q);e.c=r1(e.c+t.c/q);e.f=r1(e.f+t.f/q);(e.add=e.add||[]).push({n:x.n,amt:+ui.ao.amt,u:ui.ao.u,k:r1(t.k),p:r1(t.p),c:r1(t.c),f:r1(t.f)});closeSheet();ui.newE=e.id;commit();toast(`Added ${esc(x.n)} to ${esc(e.n)} · +${fmt(t.k)} kcal`,"good")}
   else if(a==="aorm"){const e=(state.logs[ui.date]||[]).find(q=>q.id===ui.ao.id),i=+b.dataset.i;if(!e||!e.add)return;const r=e.add.splice(i,1)[0],q=e.q||1;e.k=r1(e.k-r.k/q);e.p=r1(e.p-r.p/q);e.c=r1(e.c-r.c/q);e.f=r1(e.f-r.f/q);commit();aoRefresh();toast(`Removed ${esc(r.n)}`)}
-  else if(a==="hday"){const d=b.dataset.d,L=state.logs[d]||[],t=tot(L),W=state.workouts.find(w=>w.d===d&&w.ex.some(e=>e.sets.length));toast(`${nice(d)}: ${L.length?fmt(t.k)+" kcal · "+fmt(t.p)+" g P":"no food logged"}${W?" · 🏋️ "+W.ex.reduce((a,e)=>a+e.sets.length,0)+" sets":""}`)}
+  else if(a==="hday"){const d=b.dataset.d,L=state.logs[d]||[],t=tot(L),W=state.workouts.find(w=>w.d===d&&w.ex.some(e=>e.sets.length));toast(`${nice(d)}: ${L.length?fmt(t.k)+" kcal · "+fmt(t.p)+" g P":"no food logged"}${W?" · 🏋️ "+W.ex.reduce((a,e)=>a+scnt(e),0)+" sets":""}`)}
   else if(a==="mmode"){ui.mm=b.dataset.k;render()}
-  else if(a==="mmus"){const m=b.dataset.m,cut=ymd(new Date(Date.now()-7*DAY));let n=0,ld=null;const ex=new Set();for(const w of state.workouts)for(const e of w.ex)if(e.sets.length&&musc(e.n)===m){if(w.d>cut)n+=e.sets.length;if(!ld||w.d>ld)ld=w.d;ex.add(e.n)}toast(`<b>${m}</b>: ${n} sets this week${ld?" · last "+short(ld):""}${ex.size?" · "+[...ex].slice(0,3).map(esc).join(", "):""}`)}
+  else if(a==="mmus"){const m=b.dataset.m,cut=ymd(new Date(Date.now()-7*DAY));let n=0,ld=null;const ex=new Set();for(const w of state.workouts)for(const e of w.ex)if(e.sets.length&&musc(e.n)===m){if(w.d>cut)n+=scnt(e);if(!ld||w.d>ld)ld=w.d;ex.add(e.n)}toast(`<b>${m}</b>: ${n} sets this week${ld?" · last "+short(ld):""}${ex.size?" · "+[...ex].slice(0,3).map(esc).join(", "):""}`)}
   else if(a==="wrap"){openWrap(0)}
   else if(a==="wrx"){closeWrap()}
   else if(a==="wrnav"){const r=b.getBoundingClientRect(),x=(window.lastPX||0)-r.left;ui.wr.i=Math.max(0,ui.wr.i+(x<r.width*0.3?-1:1));if(ui.wr.i>5){closeWrap();return}renderWrap()}
@@ -1773,7 +1778,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22w";
+const BUILD="2026-11-22x";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
