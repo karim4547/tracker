@@ -604,7 +604,8 @@ function tickRest(){let el=document.getElementById("rest");const left=Math.ceil(
 function logSet(n,w,r,tg){const W=ensureW();if(!W.t0)W.t0=Date.now();let ex=W.ex.find(x=>norm(x.n)===norm(n));if(!ex){ex={n,sets:[]};W.ex.push(ex)}const C=coach(ex.n,tg||"",histOf(ex.n,ui.date));const pr=react(ex.n,w,r,ex.sets.length,C);ex.sets.push([w,r]);ui.newSet=ex.n+"|"+(ex.sets.length-1);W.t1=Date.now();if(W.ex.reduce((a,e)=>a+e.sets.length,0)===1&&(!W.t0||W.t1-W.t0>15*6e4))W.t0=W.t1-3*6e4;sfx("set");return C}
 function wmList(){const key=sessKey(),P=state.plan[key]||{ex:[]},PX=exFor(P,ui.date),W=curW(),names=PX.map(e=>e[0]),extra=W?W.ex.map(e=>e.n).filter(n=>!names.some(x=>norm(x)===norm(n))):[];return[...PX.map(e=>[e[0],((W&&W.ex.find(x=>norm(x.n)===norm(e[0])))||{}).tg||e[1]]),...extra.map(n=>[n,((W.ex.find(e=>norm(e.n)===norm(n)))||{}).tg||""])]}
 function openWM(){if(!wmList().length){toast("Add an exercise first","warn");return}ui.wm={i:0,st:Date.now()};const L=wmList(),W=curW();const k=L.findIndex(([n,tg])=>{const d=W&&W.ex.find(e=>norm(e.n)===norm(n));return!d||d.sets.length<rangeOf(tg).n});ui.wm.i=Math.max(0,k);const W2=ensureW();if(!W2.t0||!W2.ex.some(e=>e.sets.length))W2.t0=Date.now();ui.wmw=null;ui.wmr=null;renderWM()}
-function closeWM(){const o=document.getElementById("wm");if(o){o.classList.remove("show");setTimeout(()=>o.remove(),300)}ui.wm=null;document.body.style.overflow="";render()}
+function wmLog(n,tg,w,r){const L=wmList();logSet(n,w,r,tg);const ns=ui.newSet;commit();ui.newSet=ns;const W=curW(),d=W.ex.find(e=>norm(e.n)===norm(n)),need=coach(n,tg,[]).R.n;if(d.sets.length>=need&&ui.wm.i<L.length-1){ui.wm.i++;ui.wmw=null;toast(`✓ ${esc(n)} done. Next: ${esc(L[ui.wm.i][0])}`,"good")}renderWM();ui.newSet=null;startRest()}
+function closeWM(){if(ui.wmh){clearInterval(ui.wmh.iv);ui.wmh=null}const o=document.getElementById("wm");if(o){o.classList.remove("show");setTimeout(()=>o.remove(),300)}ui.wm=null;document.body.style.overflow="";render()}
 function renderWM(){
   let o=document.getElementById("wm");if(!o){o=document.createElement("div");o.id="wm";document.body.appendChild(o);requestAnimationFrame(()=>o.classList.add("show"))}document.body.style.overflow="hidden";
   if(ui.wm.sum){o.innerHTML=wmSummary();return}
@@ -617,8 +618,8 @@ function renderWM(){
   <div class="coach ${C.k}"><b>${C.head}</b><span>${C.why}</span></div>
   <div class="chips wmc">${ds.map((s,j)=>{const l=C.last&&C.last.sets[j];const c=l?(s[0]>l[0]||(s[0]===l[0]&&s[1]>l[1])?"up":s[0]===l[0]&&s[1]===l[1]?"eq":"dn"):"";return `<span class="chip ${c} ${ui.newSet===n+"|"+j?"new":""}">${isTimed(n,tg)?(s[0]?kgs(s[0])+" · ":"")+s[1]+" s":kgs(s[0])+" × "+s[1]}</span>`}).join("")}${Array.from({length:Math.max(0,C.R.n-ds.length)},(_,q)=>`<span class="chip ghostc">${isTimed(n,tg)?(C.reps[ds.length+q]??C.R.lo)+" s":(C.w!=null?kgs(C.w):"?")+" × "+(C.reps[ds.length+q]??C.R.lo)}</span>`).join("")}</div>
   <div class="steps2"><div class="stpb"><span class="mut sm">Weight</span><div><button data-a="wmw" data-d="-${inc}" aria-label="Less weight">−</button><b>${ui.wmw}<small> kg</small></b><button data-a="wmw" data-d="${inc}" aria-label="More weight">+</button></div></div>
-  <div class="stpb"><span class="mut sm">${isTimed(n,tg)?"Seconds":"Reps"}${C.reps[ds.length]?` · aim ${C.reps[ds.length]}`:""}</span><div><button data-a="wmr" data-d="-1" aria-label="Fewer reps">−</button><b>${ui.wmr}</b><button data-a="wmr" data-d="1" aria-label="More reps">+</button></div></div></div>
-  <button class="pri wmgo" data-a="wmset">✓ Log set ${ds.length+1}</button>
+  <div class="stpb"><span class="mut sm">${isTimed(n,tg)?"Seconds":"Reps"}${C.reps[ds.length]?` · aim ${C.reps[ds.length]}`:""}</span><div><button data-a="wmr" data-d="-${isTimed(n,tg)?5:1}" aria-label="Less">−</button><b>${ui.wmr}${isTimed(n,tg)?"<small> s</small>":""}</b><button data-a="wmr" data-d="${isTimed(n,tg)?5:1}" aria-label="More">+</button></div></div></div>
+  ${isTimed(n,tg)?`${ui.wmh?`<div id="wmhold" style="text-align:center;font-weight:800;font-size:84px;line-height:1;margin:6px 0 10px;font-variant-numeric:tabular-nums"><small style="display:block;font-size:15px;font-weight:600;opacity:.7">Get ready</small>3</div>`:""}<button class="pri wmgo" id="wmholdb" data-a="wmhold">${ui.wmh?"⏹ Stop and log":`⏱ Start ${ui.wmr} s hold · set ${ds.length+1}`}</button>${ui.wmh?"":`<button class="ghost" data-a="wmset" style="width:100%;margin-top:8px">✓ Log ${ui.wmr} s without timer</button>`}`:`<button class="pri wmgo" data-a="wmset">✓ Log set ${ds.length+1}</button>`}
   <div class="wmnav"><button data-a="wmnav" data-d="-1" ${i?"":"disabled"}>‹ Previous</button><button data-a="wmnav" data-d="1">${i<L.length-1?"Next ›":"Finish ✓"}</button></div></div>`;
 }
 function wmSummary(){
@@ -1559,8 +1560,14 @@ document.addEventListener("click",e=>{
   else if(a==="wmw"){const L=wmList(),cn=(L[Math.min(ui.wm.i,L.length-1)]||[""])[0],d=parseFloat(b.dataset.d);ui.wmw=isDB(cn)?dbNext(+ui.wmw||0,Math.sign(d)):Math.max(0,r1((+ui.wmw||0)+d));renderWM()}
   else if(a==="gymset"){state.settings.gym=b.dataset.k;commit();toast(`${GYMS[b.dataset.k]}: dumbbell weights updated`,"good")}
   else if(a==="wmr"){ui.wmr=Math.max(1,(+ui.wmr||0)+parseInt(b.dataset.d,10));renderWM()}
-  else if(a==="wmset"){const L=wmList(),[n,tg]=L[Math.min(ui.wm.i,L.length-1)];logSet(n,+ui.wmw||0,+ui.wmr||1,tg);const ns=ui.newSet;commit();ui.newSet=ns;const W=curW(),d=W.ex.find(e=>norm(e.n)===norm(n));if(d.sets.length>=rangeOf(tg).n&&ui.wm.i<L.length-1){ui.wm.i++;ui.wmw=null;toast(`✓ ${esc(n)} done. Next: ${esc(L[ui.wm.i][0])}`,"good")}renderWM();ui.newSet=null;startRest()}
-  else if(a==="wmnav"){const L=wmList(),d=+b.dataset.d;if(ui.wm.i+d>=L.length){ui.wm.sum=1;ui.restEnd=0;const rr=document.getElementById("rest");if(rr)rr.classList.remove("show");checkAch();commit();confetti()}else ui.wm.i=Math.max(0,ui.wm.i+d);ui.wmw=null;renderWM()}
+  else if(a==="wmhold"){const H=ui.wmh;if(H){clearInterval(H.iv);ui.wmh=null;const el=Math.round((Date.now()-H.t0)/1000);if(el>=3)wmLog(H.n,H.tg,H.w,el);else renderWM();return}
+    const L=wmList(),[n,tg]=L[Math.min(ui.wm.i,L.length-1)],h={n,tg,w:+ui.wmw||0,sec:+ui.wmr||30,t0:Date.now()+3000};ui.wmh=h;renderWM();
+    const tick=()=>{if(ui.wmh!==h){clearInterval(h.iv);return}const big=document.getElementById("wmhold"),bt=document.getElementById("wmholdb"),ms=h.t0-Date.now();if(ms>0){if(big)big.innerHTML=`<small style="display:block;font-size:15px;font-weight:600;opacity:.7">Get ready</small>${Math.ceil(ms/1000)}`;return}const left=Math.ceil(h.sec-(Date.now()-h.t0)/1000);
+      if(left<=0){clearInterval(h.iv);ui.wmh=null;try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}wmLog(h.n,h.tg,h.w,h.sec);return}if(big)big.innerHTML=`<small style="display:block;font-size:15px;font-weight:600;opacity:.7">Hold · seconds left</small>${left}`;if(bt)bt.textContent="⏹ Stop and log"};
+    h.iv=setInterval(tick,200);tick()}
+  else if(a==="wmset"){const L=wmList(),[n,tg]=L[Math.min(ui.wm.i,L.length-1)];wmLog(n,tg,+ui.wmw||0,+ui.wmr||1)}
+  else if(a==="wmsetOLD"){const L=wmList(),[n,tg]=L[Math.min(ui.wm.i,L.length-1)];logSet(n,+ui.wmw||0,+ui.wmr||1,tg);const ns=ui.newSet;commit();ui.newSet=ns;const W=curW(),d=W.ex.find(e=>norm(e.n)===norm(n));if(d.sets.length>=rangeOf(tg).n&&ui.wm.i<L.length-1){ui.wm.i++;ui.wmw=null;toast(`✓ ${esc(n)} done. Next: ${esc(L[ui.wm.i][0])}`,"good")}renderWM();ui.newSet=null;startRest()}
+  else if(a==="wmnav"){if(ui.wmh){clearInterval(ui.wmh.iv);ui.wmh=null}const L=wmList(),d=+b.dataset.d;if(ui.wm.i+d>=L.length){ui.wm.sum=1;ui.restEnd=0;const rr=document.getElementById("rest");if(rr)rr.classList.remove("show");checkAch();commit();confetti()}else ui.wm.i=Math.max(0,ui.wm.i+d);ui.wmw=null;renderWM()}
   else if(a==="wmfin"){ui.wm.sum=1;ui.restEnd=0;clearInterval(restI);const rr=document.getElementById("rest");if(rr)rr.classList.remove("show");commit();confetti();renderWM()}
   else if(a==="owedit"){ui.owEdit=1;render();window.scrollTo(0,0)}
   else if(a==="owdone"){ui.owEdit=0;ui.enter=1;render()}
@@ -1635,7 +1642,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-22j";
+const BUILD="2026-11-22k";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
