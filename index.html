@@ -372,8 +372,8 @@ function recovery(d){const h=hkD(d),S=state.settings,sl=((state.hab||{})[d]||{})
   {const bt=hkBase("temp",d,14);if(h.temp!=null&&bt!=null&&h.temp-bt>0.4){sc-=Math.min(15,(h.temp-bt)*20);why.push(`wrist temp +${r1(h.temp-bt)}°`)}if(h.spo2!=null&&h.spo2<94){sc-=6;why.push(`blood O₂ ${h.spo2}%`)}if(h.deep!=null&&h.sleep){const dp=h.deep/(h.sleep*60);if(dp<0.1){sc-=4;why.push("little deep sleep")}}}
   sc=Math.round(Math.max(5,Math.min(100,sc)));const lv=sc>=75?["Ready to push","var(--grn)","Go for rep and weight increases today."]:sc>=55?["Normal","var(--yel)","Train as planned."]:["Take it easier","var(--red)","Keep the weights, skip extra sets, focus on form and sleep tonight."];
   return{sc,lv,why,base:!!(bh||br)}}
-function burnTD(S){const td=new Date();td.setHours(0,0,0,0);const v=[];for(let i=1;i<=14;i++){const x=new Date(td);x.setDate(x.getDate()-i);const h=hkD(ymd(x));if(h.active!=null&&h.basal!=null&&h.basal>800)v.push(h.active+h.basal)}
-  if(S.burn!=="est"&&v.length>=3){const raw=v.reduce((a,b)=>a+b,0)/v.length;return{v:raw*(S.wf||0.9),src:`Apple Watch, ${v.length}-day average`,n:v.length}}return{v:tdeeOf(S),src:"estimate",n:0}}
+function burnTD(S){const td=new Date();td.setHours(0,0,0,0);const v=[];let pt=0;for(let i=1;i<=14;i++){const x=new Date(td);x.setDate(x.getDate()-i);const h=hkD(ymd(x));if(h.active==null||h.basal==null)continue;let f=1;if(h.t){const e=new Date(x);e.setDate(e.getDate()+1);f=Math.min(1,Math.max(0,(h.t-x.getTime())/(e-x)))}if(f<0.5)continue;const bas=h.basal/f;if(bas>1200){v.push(h.active+bas);if(f<0.97)pt++}}
+  if(S.burn!=="est"&&v.length>=3){const raw=v.reduce((a,b)=>a+b,0)/v.length;return{v:raw*(S.wf||0.9),src:`Apple Watch, ${v.length}-day average${pt?`, ${pt} part-day sync${pt>1?"s":""} topped up`:""}`,n:v.length}}return{v:tdeeOf(S),src:"estimate",n:0}}
 function hkBtns(){if(gistId())return`<span class="chips" style="margin:0"><span class="mut sm">auto</span><button data-a="hkimp" aria-label="Check for new Watch data">↻</button></span>`;const pend=ui.hkPend&&Date.now()-ui.hkPend<600000;return pend?`<button class="pri pulse" data-a="hkimp">✓ Tap to finish sync</button>`:`<span class="chips" style="margin:0"><button class="pri" data-a="hkrun">▶ Run &amp; Sync</button><button data-a="hkimp" aria-label="Import from clipboard">↻</button></span>`}
 function vWatch(){const d=ui.date,h=hkD(d),R=recovery(d),has=Object.keys(h).length>1;
   if(!has)return`<section class="card watch"><div class="exh"><h2 style="margin:0">⌚ Apple Watch</h2>${hkBtns()}</div><p class="mut sm">Run your Health Shortcut, then tap Import to pull in steps, calories burned, resting HR and HRV. Set it up in Settings → Apple Health.</p></section>`;
@@ -1880,7 +1880,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-23r";
+const BUILD="2026-11-23s";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
