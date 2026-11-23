@@ -1084,7 +1084,7 @@ function aiSoon(){if(!GK())return;clearTimeout(aiTimer);aiTimer=setTimeout(()=>a
 function aiErr(e){const m=e&&e.message,g=e&&e.gm?` Google says: "${String(e.gm).slice(0,180)}"`:"";ui.aiLastErr=(e&&e.st?"HTTP "+e.st+". ":"")+(e&&e.gm||m||"");
   return m==="quota"?`You've used today's free Gemini allowance on every model. It resets around ${new Date(gReset()).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}. Your last results stay on screen until then.`:m==="busy"?"Google's Gemini servers are overloaded right now. It usually clears in a few minutes; try again then.":m==="nokey"?"Add your Gemini key first.":m==="rate"?"Gemini's free limit was hit. Wait a minute, or switch the model to Flash."+g:m==="model"?"That model isn't available to your key. Tap Analyze again."+g:m==="timeout"?"Gemini took too long. Tap Analyze to try again.":m==="net"?"Couldn't connect to Google. Check your internet."+g:m==="nomodel"?"Your key has no Gemini models enabled.":(e&&e.st===400||e&&e.st===401||e&&e.st===403)?"Google rejected the request (HTTP "+e.st+")."+g:"Something went wrong ("+(e&&e.st?"HTTP "+e.st:m)+")."+g}
 async function aiAnalyze(){if(aiBusy)return;const dates=[...new Set(phs().map(p=>p.d))];if(!dates.length)return;aiBusy=1;render();
-  try{const cur=dates[dates.length-1],base=dates[0],prev=dates.length>2?dates[dates.length-2]:null,want=[];
+  try{const cur=dates[dates.length-1],base=dates[0],prev=[...dates].reverse().find(d=>d!==base&&d<cur&&(pd(cur)-pd(d))>=7*864e5)||null,want=[];
     const add=(d,tag)=>{for(const[p,l] of POSES){const x=phOf(p,d);if(x)want.push([x,`${tag} · ${l} · ${nice(d)}`])}};add(cur,"CURRENT");if(base!==cur)add(base,"BASELINE");if(prev&&prev!==base)add(prev,"PREVIOUS");
     const parts=[],labels=[];let pi=0;for(const[x,l] of want){aiStep(`Preparing photo ${++pi} of ${want.length}…`);const b=await img64(x.id,560);if(b){labels.push(l);parts.push({inline_data:{mime_type:"image/jpeg",data:b}})}}
     const R=(state.coach||{}).reports||[],last=R[R.length-1],S=state.settings;
@@ -1103,7 +1103,7 @@ Strength change on main lifts (${base} → ${cur}): ${lifts}
 Average intake over the period: ${avgK?avgK+" kcal, "+avgP+" g protein a day":"not logged"}
 ${last?`YOUR PREVIOUS REPORT (${last.d}): ${last.r.summary}\nPrevious scores: ${JSON.stringify(last.r.scores)}`:"This is the first report."}
 
-Score each area 1-10 for the CURRENT photos (10 = stage-ready; a fit, lean gym-goer is about 7). Stay consistent with your previous scores; change a score only for a change you can see.
+Score each area 1-10 for the CURRENT photos on this fixed scale: 3 = average untrained man, 4 = some training visible, 5 = clearly trains, 6 = fit, 7 = lean athletic gym-goer, 8 = very lean and muscular, 9-10 = competition stage. Be honest but encouraging: name what is working before what is lagging. Stay consistent with your previous scores; change a score only for a change you can see. Visible change takes weeks, so if the last photos are only days old, do not dwell on "no change": judge progress against the baseline instead.
 
 Reply with ONLY JSON: {"summary":"2-3 sentence verdict","scores":{"overall":n,"leanness":n,"shoulders":n,"arms":n,"chest":n,"back":n,"core":n},"bf_range":"e.g. 16-19%","since_previous":[..],"since_baseline":[..],"strengths":[..],"lagging":[..],"training_focus":[..],"nutrition_focus":[..],"photo_tips":[..]}`;
     const t=await gemCall([{text:prompt},...parts],true),a=t.indexOf("{"),b=t.lastIndexOf("}"),r=JSON.parse(t.slice(a,b+1));
@@ -1122,7 +1122,7 @@ function aiCard(){const key=GK(),R=(state.coach||{}).reports||[],last=R[R.length
   return`<section class="card"><div class="exh"><h2 style="margin:0">🧠 AI coach</h2>${last?`<span class="tag">${short(last.d)}</span>`:""}</div>
   ${aiBusy?`<p class="sm" id="aistep" style="margin:10px 0">⏳ ${esc(ui.aiStepT||"Starting…")}</p>`:""}${!aiBusy&&ui.aiLastErr?`<p class="mut sm" style="margin:8px 0;word-break:break-word">Last error: ${esc(ui.aiLastErr)}</p>`:""}
   ${last?`<div style="display:flex;gap:14px;align-items:flex-end;margin:12px 0 8px;flex-wrap:wrap"><div style="font-weight:800;font-size:54px;line-height:1;color:var(--acc,#ff5a1f);white-space:nowrap;flex:none">${s.overall??"–"}<span style="font-size:16px;color:var(--mut,#888)">/10</span></div><div class="mut sm" style="padding-bottom:6px">Overall<br>Est. body fat <b>${esc(last.r.bf_range||"–")}</b></div></div><p class="sm" style="margin:0 0 12px">${esc(last.r.summary)}</p>
-  ${AIA.map(([k,l])=>{const v=s[k],dd=ps[k]!=null&&v!=null?v-ps[k]:null;return`<div style="display:grid;grid-template-columns:7em minmax(0,1fr) 3.2em;gap:10px;align-items:center;margin:6px 0" class="sm"><span>${l}</span><span style="height:9px;border-radius:9px;background:var(--soft);overflow:hidden"><i style="display:block;height:100%;width:${(v||0)*10}%;background:var(--acc,#ff5a1f);border-radius:9px"></i></span><span style="text-align:right">${v??"–"}${dd?` <b class="${dd>0?"ok":"bad"}">${dd>0?"+":""}${dd}</b>`:""}</span></div>`}).join("")}
+  ${AIA.map(([k,l])=>{const v=s[k],dd=ps[k]!=null&&v!=null?v-ps[k]:null;return`<div style="display:grid;grid-template-columns:7em minmax(0,1fr) 3.2em;gap:10px;align-items:center;margin:6px 0" class="sm"><span>${l}</span><span style="height:9px;border-radius:9px;background:var(--soft);overflow:hidden"><i style="display:block;height:100%;width:${(v||0)*10}%;background:var(--acc,#ff5a1f);border-radius:9px"></i></span><span style="text-align:right">${v??"–"}${dd?` <b class="${dd>0?"ok":"bad"}">${dd>0?"+":""}${dd}</b>`:""}</span></div>`}).join("")}<p class="mut sm" style="margin:4px 0 10px">Scale: 3 untrained · 5 clearly trains · 7 lean athletic · 10 stage-ready</p>
   ${li("Since last check-in",last.r.since_previous)}${li("Since day one",last.r.since_baseline)}${li("Strengths",last.r.strengths)}${li("Lagging",last.r.lagging)}${li("Training focus",last.r.training_focus)}${li("Nutrition focus",last.r.nutrition_focus)}${li("Better photos next time",last.r.photo_tips)}
   ${R.length>1?`<p class="sm" style="margin-top:12px"><b>Overall score over time:</b> ${R.map(x=>`${short(x.d)} <b>${(x.r.scores||{}).overall??"–"}</b>`).join(" → ")}</p>`:""}
   <p class="mut sm">Visual estimate from photos by Gemini, not a measurement.</p>`:`<p class="sm">Ready to analyse your ${phs().length} photos.</p>`}
@@ -1880,7 +1880,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-23s";
+const BUILD="2026-11-23t";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
