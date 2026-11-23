@@ -547,6 +547,8 @@ function swapSheet(o){const sw=(state.swap||{})[ui.date]||{},cur=sw[norm(o)]??gy
   ${list.length?`<div class="sug">${list.map(card).join("")}</div>`:""}
   <div class="addrow" style="margin-top:12px"><input id="swc" placeholder="Or type any exercise" aria-label="Other exercise"><button data-a="swapto" data-k="">Use</button></div>
   ${norm(cur)!==norm(o)?`<button class="ghost wide" style="margin-top:12px" data-a="swapto" data-k="${esc(o)}">↺ Back to ${esc(o)}</button>`:""}`)}
+const ORV={"flat bench or machine press":["Flat bench press","Machine chest press"]};
+function orVars(n){const k=norm(n);if(ORV[k])return ORV[k];if(!/ or /i.test(n))return null;const p=n.split(/ or /i).map(x=>x.trim());const tail=p[p.length-1].split(" ").pop();return p.map((x,i)=>{x=x.charAt(0).toUpperCase()+x.slice(1);return i<p.length-1&&x.split(" ").length<2?x+" "+tail:x})}
 function doSwap(nm){nm=(nm||"").trim();if(!nm)return;const o=ui.swo,P=state.plan[sessKey()];state.swap=state.swap||{};const s=state.swap[ui.date]=state.swap[ui.date]||{};
   if(ui.swPerm===2){const g=state.settings.gym||"uni";state.gymSwap=state.gymSwap||{};const G=state.gymSwap[g]=state.gymSwap[g]||{};delete s[norm(o)];if(norm(nm)===norm(o)){delete G[norm(o)];toast(`${GYMS[g]}: back to ${esc(o)}`,"good")}else{G[norm(o)]=nm;toast(`${GYMS[g]}: ${esc(nm)} replaces ${esc(o)} every time`,"good")}closeSheet();commit();return}
   if(norm(nm)===norm(o)&&gymSw()[norm(o)]&&!ui.swPerm){s[norm(o)]=o;toast(`Today: ${esc(o)}`,"good");closeSheet();commit();return}
@@ -655,7 +657,7 @@ function vGym(){
     const chip=(s,j)=>{const l=ls(j);let cls="";if(l){cls=s[0]>l[0]||(s[0]===l[0]&&s[1]>l[1])?"up":s[0]===l[0]&&s[1]===l[1]?"eq":"dn"}else if(C.reps[j]&&s[1]>=C.reps[j])cls="up";const isPr=s[0]>0&&e1(s[0],s[1])>bestOf(n,ui.date,j).e+0.05&&bestOf(n,ui.date,j).e>0;return `<span class="chip ${cls} ${ui.newSet===n+"|"+j?"new":""}">${isPr&&!TM?"🏆 ":""}${s[2]?"<b>"+s[2]+"</b> ":""}${TM?(s[0]?kgs(s[0])+" · ":"")+s[1]+" s":kgs(s[0])+" × "+s[1]}<button data-a="rmset" data-n="${esc(n)}" data-j="${j}" aria-label="Remove set">✕</button></span>`};
     const todo=Array.from({length:Math.max(0,C.R.n-ds.length)},(_,q)=>`<span class="chip ghostc">${isUni(n)?sideOf(n,ds.length+q)+" ":""}${isTimed(n,tg)?(C.reps[ds.length+q]??C.R.lo)+" s":(C.w!=null?kgs(C.w):"?")+" × "+(C.reps[ds.length+q]??C.R.lo)}</span>`).join("");
     const after=ds.length>=C.R.n?coach(n,tg,[{d:ui.date,sets:ds},...H]):null;
-    return `<div class="ex ${ds.length>=C.R.n?"exdone":""}"><div class="exh"><b>${ds.length>=C.R.n?"✓ ":""}${esc(n)}</b><span style="display:flex;gap:6px;align-items:center;flex:none">${px?`<button data-a="swap" data-o="${esc(px[2]||px[0])}" aria-label="Swap ${esc(n)} for an alternative" style="min-height:32px;padding:4px 10px;border-radius:10px;font-weight:700">⇄ Swap</button>`:`<button data-a="rmex" data-n="${esc(n)}" aria-label="Remove ${esc(n)}" style="min-height:32px;padding:4px 10px;border-radius:10px">✕</button>`}<button class="tag" data-a="tgedit" data-n="${esc(n)}" data-tg="${esc(tg)}" aria-label="Change sets and ${TM?"seconds":"reps"} for ${esc(n)}" style="border:0;cursor:pointer">${(()=>{const k=isUni(n)?C.R.n/2:C.R.n;return (TM?k+"×"+C.R.lo+" s":k+"×"+C.R.lo+"–"+C.R.hi)+(isUni(n)?" each side":"")})()} ✎</button></span></div>${px&&px[2]?`<div class="mut sm" style="margin:-2px 0 6px">⇄ Instead of ${esc(px[2])} ${px[3]==="gym"?"at "+GYMS[state.settings.gym||"uni"]:"for today"}</div>`:""}
+    return `<div class="ex ${ds.length>=C.R.n?"exdone":""}"><div class="exh"><b>${ds.length>=C.R.n?"✓ ":""}${esc(n)}</b><span style="display:flex;gap:6px;align-items:center;flex:none">${px?`<button data-a="swap" data-o="${esc(px[2]||px[0])}" aria-label="Swap ${esc(n)} for an alternative" style="min-height:32px;padding:4px 10px;border-radius:10px;font-weight:700">⇄ Swap</button>`:`<button data-a="rmex" data-n="${esc(n)}" aria-label="Remove ${esc(n)}" style="min-height:32px;padding:4px 10px;border-radius:10px">✕</button>`}<button class="tag" data-a="tgedit" data-n="${esc(n)}" data-tg="${esc(tg)}" aria-label="Change sets and ${TM?"seconds":"reps"} for ${esc(n)}" style="border:0;cursor:pointer">${(()=>{const k=isUni(n)?C.R.n/2:C.R.n;return (TM?k+"×"+C.R.lo+" s":k+"×"+C.R.lo+"–"+C.R.hi)+(isUni(n)?" each side":"")})()} ✎</button></span></div>${px&&!ds.length&&orVars(n)?`<div class="chips" style="margin:2px 0 8px;align-items:center"><span class="mut sm">Which one today?</span>${orVars(n).map(v=>`<button data-a="orpick" data-o="${esc(px[2]||px[0])}" data-to="${esc(v)}" style="min-height:32px;padding:4px 10px;border-radius:10px">${esc(v)}</button>`).join("")}</div>`:""}${px&&px[2]?`<div class="mut sm" style="margin:-2px 0 6px">⇄ Instead of ${esc(px[2])} ${px[3]==="gym"?"at "+GYMS[state.settings.gym||"uni"]:"for today"}</div>`:""}
     <div class="coach ${C.k}"><b>${C.head}</b><span>${C.why}</span>${C.last?`<span class="mut">Last (${short(C.last.d)}): ${setsTxt(C.last.sets)}</span>`:""}</div>
     <div class="chips">${ds.map(chip).join("")}${todo}</div>
     ${after?`<p class="sm"><b>Done.</b> Next time: ${after.head.toLowerCase()}.</p>`:""}
@@ -1668,6 +1670,7 @@ document.addEventListener("click",e=>{
   else if(a==="phview"){const p=(state.photos||[]).find(x=>x.id===b.dataset.id);if(p){sheet(`<h2>${POSES.find(x=>x[0]===p.pose)[1]} · ${nice(p.d)}</h2><div class="phcmp one" style="aspect-ratio:auto;min-height:300px"><img data-ph="${p.id}" alt="Photo" style="position:static;height:auto"></div><button class="ghost wide" style="margin-top:12px;color:var(--red)" data-a="phdel" data-id="${p.id}">Delete photo</button>`);hydratePh()}}
   else if(a==="phdel"){if(ui.phdc!==b.dataset.id){ui.phdc=b.dataset.id;b.textContent="Tap again to delete for good";return}const id=b.dataset.id;state.photos=(state.photos||[]).filter(x=>x.id!==id);PDB.del(id);ui.phdc=null;closeSheet();commit();toast("Photo deleted","good")}
   else if(a==="swap"){ui.swPerm=0;swapSheet(b.dataset.o)}
+  else if(a==="orpick"){ui.swo=b.dataset.o;ui.swPerm=0;doSwap(b.dataset.to)}
   else if(a==="swperm"){ui.swPerm=+b.dataset.k;swapSheet(ui.swo)}
   else if(a==="swapto")doSwap(b.dataset.k||(document.getElementById("swc")||{}).value);
   else if(a==="gowa"){ui.sub="watch";ui.enter=1;location.hash="progress";if(ui.tab==="progress")render()}
@@ -1882,7 +1885,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-24e";
+const BUILD="2026-11-24f";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
