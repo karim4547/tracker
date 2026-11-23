@@ -580,8 +580,9 @@ const sideOf=(n,k)=>((k+((ui.sf||{})[norm(n)]?1:0))%2===0)?"L":"R";
 const SIDE={L:"Left",R:"Right"};
 const scnt=e=>isUni(e.n)?Math.ceil(e.sets.length/2):e.sets.length;
 const cntOf=n=>{const W=curW(),e=W&&W.ex.find(x=>norm(x.n)===norm(n));return e?e.sets.length:0};
-function uniC(n,C){if(!isUni(n)||!C)return C;const R={...C.R,n:C.R.n*2},reps=[];for(const r of C.reps)reps.push(r,r);while(reps.length<R.n)reps.push(reps[reps.length-1]??R.lo);return{...C,R,reps,why:C.why+" One set = left and right. Holds run both legs back to back with 5 s to switch."}}
-function coach(n,tg,H){return uniC(n,coach0(n,tg,H))}
+const limbs=n=>/leg|squat|lunge|calf|step-?up|pistol|hamstring|quad|glute|hip|nordic|split/i.test(n||"")?"legs":"arms";
+function uniC(n,C,tg){if(!isUni(n)||!C)return C;const R={...C.R,n:C.R.n*2},reps=[];for(const r of C.reps)reps.push(r,r);while(reps.length<R.n)reps.push(reps[reps.length-1]??R.lo);return{...C,R,reps,why:C.why+" One set = left and right."+(isTimed(n,tg)?` Holds run both ${limbs(n)} back to back with 5 s to switch.`:"")}}
+function coach(n,tg,H){return uniC(n,coach0(n,tg,H),tg)}
 function coach0(n,tg,H){if(isTimed(n,tg))return tcoach(n,tg,H);
   const R=rangeOf(tg),inc=incOf(n),last=H[0],db=isDB(n);
   if(!last)return{k:"start",w:null,reps:Array(R.n).fill(R.lo),R,head:"First time",why:`Pick a weight you can lift ${R.lo}–${R.hi} times with 1–2 reps left in the tank. That sets your baseline.`};
@@ -629,7 +630,7 @@ function renderWM(){
   <div class="chips wmc">${ds.map((s,j)=>{const l=C.last&&C.last.sets[j];const c=l?(s[0]>l[0]||(s[0]===l[0]&&s[1]>l[1])?"up":s[0]===l[0]&&s[1]===l[1]?"eq":"dn"):"";return `<span class="chip ${c} ${ui.newSet===n+"|"+j?"new":""}">${s[2]?"<b>"+s[2]+"</b> ":""}${isTimed(n,tg)?(s[0]?kgs(s[0])+" · ":"")+s[1]+" s":kgs(s[0])+" × "+s[1]}</span>`}).join("")}${Array.from({length:Math.max(0,C.R.n-ds.length)},(_,q)=>`<span class="chip ghostc">${isUni(n)?sideOf(n,ds.length+q)+" ":""}${isTimed(n,tg)?(C.reps[ds.length+q]??C.R.lo)+" s":(C.w!=null?kgs(C.w):"?")+" × "+(C.reps[ds.length+q]??C.R.lo)}</span>`).join("")}</div>
   <div class="steps2"><div class="stpb"><span class="mut sm">Weight</span><div><button data-a="wmw" data-d="-${inc}" aria-label="Less weight">−</button><b>${ui.wmw}<small> kg</small></b><button data-a="wmw" data-d="${inc}" aria-label="More weight">+</button></div></div>
   <div class="stpb"><span class="mut sm">${isTimed(n,tg)?"Seconds":"Reps"}${isUni(n)?" each leg":""}${C.reps[ds.length]?` · aim ${C.reps[ds.length]}`:""}</span><div><button data-a="wmr" data-d="-${isTimed(n,tg)?5:1}" aria-label="Less">−</button><b>${ui.wmr}${isTimed(n,tg)?"<small> s</small>":""}</b><button data-a="wmr" data-d="${isTimed(n,tg)?5:1}" aria-label="More">+</button></div></div></div>
-  ${isTimed(n,tg)?`${ui.wmh?`<div id="wmhold" style="text-align:center;font-weight:800;font-size:84px;line-height:1;margin:6px 0 10px;font-variant-numeric:tabular-nums"><small style="display:block;font-size:15px;font-weight:600;opacity:.7">Get ready</small>3</div>`:""}<button class="pri wmgo" id="wmholdb" data-a="wmhold">${ui.wmh?"⏹ Stop and log":`⏱ Start ${ui.wmr} s hold · ${isUni(n)?"set "+(Math.floor(ds.length/2)+1)+" · "+SIDE[sideOf(n,ds.length)]+" then "+SIDE[sideOf(n,ds.length+1)].toLowerCase():"set "+(ds.length+1)}`}</button>${ui.wmh?"":`<button class="ghost" data-a="wmset" style="width:100%;margin-top:8px">✓ Log ${ui.wmr} s without timer</button>`}`:`<button class="pri wmgo" data-a="wmset">✓ ${isUni(n)?"Log set "+(Math.floor(ds.length/2)+1)+" · both legs":"Log set "+(ds.length+1)}</button>`}
+  ${isTimed(n,tg)?`${ui.wmh?`<div id="wmhold" style="text-align:center;font-weight:800;font-size:84px;line-height:1;margin:6px 0 10px;font-variant-numeric:tabular-nums"><small style="display:block;font-size:15px;font-weight:600;opacity:.7">Get ready</small>3</div>`:""}<button class="pri wmgo" id="wmholdb" data-a="wmhold">${ui.wmh?"⏹ Stop and log":`⏱ Start ${ui.wmr} s hold · ${isUni(n)?"set "+(Math.floor(ds.length/2)+1)+" · "+SIDE[sideOf(n,ds.length)]+" then "+SIDE[sideOf(n,ds.length+1)].toLowerCase():"set "+(ds.length+1)}`}</button>${ui.wmh?"":`<button class="ghost" data-a="wmset" style="width:100%;margin-top:8px">✓ Log ${ui.wmr} s without timer</button>`}`:`<button class="pri wmgo" data-a="wmset">✓ ${isUni(n)?"Log set "+(Math.floor(ds.length/2)+1)+" · both "+limbs(n):"Log set "+(ds.length+1)}</button>`}
   ${isUni(n)&&ds.length<C.R.n?`<button class="ghost" data-a="side" data-n="${esc(n)}" style="width:100%;margin-top:8px">⇄ Do ${SIDE[sideOf(n,ds.length)==="L"?"R":"L"].toLowerCase()} side first</button>`:""}<div class="wmnav"><button data-a="wmnav" data-d="-1" ${i?"":"disabled"}>‹ Previous</button><button data-a="wmnav" data-d="1">${i<L.length-1?"Next ›":"Finish ✓"}</button></div></div>`;
 }
 function wmSummary(){
@@ -1886,7 +1887,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-24g";
+const BUILD="2026-11-24h";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
