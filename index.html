@@ -1563,8 +1563,8 @@ function vStats(part){
   ${card("wd",`<div class="fig short"><svg data-g="wd" role="img" aria-label="Average calories by weekday"></svg></div><p class="mut sm">Average calories for each day of the week. Spot your weak days.</p>`)}
   ${card("tf",topK.length?`<div class="mac">${topK.map(([n,o])=>macro(esc(n),o.p,`${fmt(o.p)} g · ${o.n}×`,o.p/mxp*100,"var(--red)")).join("")}</div>`+`<p class="mut sm">Where your protein comes from, over the chart range.</p>`:"")}`;}
   G.tl={unit:"kg",vals:wk.map((w,i)=>[lab(w[0]),Math.round(Wk[i].reduce((a,x)=>a+x.ex.reduce((b,e)=>b+e.sets.reduce((c,t)=>c+t[0]*t[1],0),0),0)),"var(--red)"])};
-  const lastT={};for(const w of state.workouts)for(const e of w.ex)if(e.sets.length){const m=musc(e.n);if(!lastT[m]||w.d>lastT[m])lastT[m]=w.d}
-  const ready=["Chest","Back","Shoulders","Arms","Legs"].map(m=>{const d=lastT[m]?Math.round((td-pd(lastT[m]))/DAY):null;const st=d==null?["Not trained","var(--mut)","—"]:d<=1?["Recovering","var(--red)",d?"yesterday":"today"]:d<=3?["Ready","var(--grn)",d+" days ago"]:d<=6?["Train it soon","var(--yel)",d+" days ago"]:["Neglected","#8b5cf6",d+" days ago"];return `<div class="rdy" style="--c:${st[1]}"><b>${m}</b><span class="sm">${st[0]}</span><span class="mut sm">${st[2]} · ${mu[m]} sets/wk</span></div>`}).join("");
+  const lastT={},lastN={};for(const w of state.workouts)for(const e of w.ex)if(e.sets.length){const m=musc(e.n);if(!lastT[m]||w.d>lastT[m]){lastT[m]=w.d;lastN[m]=[e.n]}else if(w.d===lastT[m]&&!lastN[m].includes(e.n))lastN[m].push(e.n)}
+  const ready=["Chest","Back","Shoulders","Arms","Legs"].map(m=>{const d=lastT[m]?Math.round((td-pd(lastT[m]))/DAY):null;const st=d==null?["Not trained","var(--mut)","—"]:d<=1?["Recovering","var(--red)",d?"yesterday":"today"]:d<=3?["Ready","var(--grn)",d+" days ago"]:d<=6?["Train it soon","var(--yel)",d+" days ago"]:["Neglected","#8b5cf6",d+" days ago"];return `<div class="rdy" style="--c:${st[1]}"><b>${m}</b><span class="sm">${st[0]}</span><span class="mut sm">${st[2]} · ${mu[m]} sets/wk</span>${lastN[m]&&d!=null&&d<=1?`<span class="mut sm" style="font-size:11px">from ${esc(lastN[m].slice(0,3).join(", "))}</span>`:""}</div>`}).join("");
   return `${muscleMap()}<section class="card"><h2>Muscle readiness</h2><div class="rgrid">${ready}</div><p class="mut sm">Muscles need about 48 hours between hard sessions.</p></section>
   <section class="card"><h2>This week</h2><div class="stats">${stat("Workouts",`${Wk[Wk.length-1].length} / ${S.planDays}`,"since Saturday")}${stat("Sets, last 7 days",Object.values(mu).reduce((a,b)=>a+b,0))}</div></section>
   ${card("tm",`<div class="mac">${Object.entries(mu).map(([m,n])=>macro(m,n,`${n} set${n===1?"":"s"} ${n>=10&&n<=20?"✓":n>20?"· a lot":""}`,n/20*100,n>=10?"var(--grn)":"var(--blue)")).join("")}</div><p class="mut sm">Last 7 days. Aim for 10–20 hard sets per muscle a week.</p>`)}
@@ -1882,7 +1882,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-24c";
+const BUILD="2026-11-24d";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
