@@ -1427,7 +1427,8 @@ const STD=[
  [/(dumbbell|db|hammer|incline|spider|concentration).*curl/,"Dumbbell curl (per hand)",[.1,.18,.28,.42,.55],"bw"],
  [/curl/,"Barbell / cable curl",[.2,.4,.6,.85,1.1],"bw"],
  [/pushdown|push-down|tricep.*(ext|press)/,"Triceps pushdown",[.2,.35,.55,.75,1],"bw"],
- [/skull/,"Skull crushers",[.15,.3,.5,.7,.9],"bw"],
+ [/(ez|bar).*skull|skull.*\b(ez|bar)\b/,"Skull crushers (EZ bar)",[.15,.3,.5,.7,.9],"bw"],
+ [/skull/,"Skull crushers (per dumbbell)",[.07,.14,.23,.33,.43],"bw"],
  [/machine lateral/,"Machine lateral raise",[.1,.2,.3,.45,.6],"bw"],
  [/lateral raise|side raise/,"Lateral raise (per hand)",[.05,.1,.17,.25,.35],"bw"],
  [/rear delt|reverse fly/,"Rear delt fly (per hand)",[.04,.08,.13,.2,.27],"bw"],
@@ -1880,7 +1881,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-23t";
+const BUILD="2026-11-24a";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
