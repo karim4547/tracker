@@ -1898,6 +1898,7 @@ try{state.seeded=state.seeded||[];if(!state.seeded.includes("tira4fix")){const V
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("peanut10")){if(!state.foods.some(f=>/salted peanuts/i.test(f.n)))state.foods.unshift({id:uid(),n:"Salted peanuts",u:"10 g",k:60,p:2.5,c:2,f:5});state.seeded.push("peanut10")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("peanutlog1125")){const d="2026-11-25";(state.logs[d]=state.logs[d]||[]).push({id:uid(),n:"Salted peanuts",k:60,p:2.5,c:2,f:5,q:1});state.seeded.push("peanutlog1125")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("vd1125")){state.hab=state.hab||{};const h=state.hab["2026-11-25"]=state.hab["2026-11-25"]||{};h.vd=1;state.seeded.push("vd1125")}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("mashreq1125")){const N="Al Mashreq rice cake";if(!state.foods.some(f=>f.n===N))state.foods.unshift({id:uid(),n:N,u:"1 piece",k:30,p:0,c:7,f:0.5});const d="2026-11-25";(state.logs[d]=state.logs[d]||[]).push({id:uid(),n:N,k:30,p:0,c:7,f:0.5,q:1});state.seeded.push("mashreq1125")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1906,7 +1907,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-25i";
+const BUILD="2026-11-25j";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
