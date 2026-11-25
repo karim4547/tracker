@@ -1885,6 +1885,12 @@ try{state.seeded=state.seeded||[];if(!state.seeded.includes("tiravan")){if(!stat
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("tira15")){const r=(state.recipes||[]).find(x=>x.n==="High-protein tiramisu cups");if(r){r.items=[{n:"HiPRO vanilla Greek yogurt",g:1200},{n:"Cream cheese",g:85},{n:"Lady fingers (savoiardi)",g:144},{n:"Honey",g:22},{n:"Cocoa powder (unsweetened)",g:12}];r.tags="sweet · cold · no cooking · meal-size cups (~385 g)";r.steps="Big meal-size cups, about 385 g each. No cooking, about 15 minutes for all 4.\n\n1. Make 120 ml strong coffee (3 tsp instant), add ½ tsp vanilla and a pinch of sugar, and let it cool.\n2. Cream: leave 5 Kiri squares out 15 min, mash smooth with 1½ tbsp honey and a pinch of salt, then gently fold in the 6 vanilla HiPRO cups until smooth.\n3. In each cup: 3 ladyfingers total. Dip each for 1 second only, break in halves, and build 3 layers: cream, ladyfinger, cream, ladyfinger, cream.\n4. Fridge overnight.\n5. Just before eating, dust about ½ tsp raw cocoa through a tea strainer."}state.seeded.push("tira15")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("noquesa1125")){const P=state.prepw,R=state.recipes||[];if(P)R.filter(x=>/quesadilla/i.test(x.n)).forEach(r=>{const p=P.plan.find(x=>x.rid===r.id);if(p)p.b=0});state.seeded.push("noquesa1125")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("tiranesp")){const r=(state.recipes||[]).find(x=>x.n==="High-protein tiramisu cups");if(r)r.steps=(r.steps||"").replace("Make 120 ml strong coffee (3 tsp instant)","Brew 3 Nespresso espresso shots (40 ml each, a strong capsule) into a wide bowl, about 120 ml");state.seeded.push("tiranesp")}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("tira4cups")){const R=state.recipes||[],r=R.find(x=>x.n==="High-protein tiramisu cups"),S=state.stock=state.stock||[];
+  const C=[[1,415,483,37.3,55,9.7],[2,350,408,31.5,46.5,8.2],[3,370,431,33.3,49.2,8.6],[4,280,326,25.2,37.2,6.5]];
+  for(const[i,w,k,p,c,f]of C){const n=`🥡 Tiramisu cup ${i} (${w} g)`;let st=S.find(x=>x.n===n);if(!st){st={id:uid(),n,q:1,u:"pcs",cat:"🥡 Prepped meals",prep:1,rid:r?r.id:"",low:0,made:"2026-11-25"};S.push(st)}
+    if(!state.foods.some(x=>x.sid===st.id))state.foods.unshift({id:uid(),n,u:`1 cup (${w} g)`,k,p,c,f,sid:st.id})}
+  if(r&&state.prepw){const pl=state.prepw.plan.find(x=>x.rid===r.id);if(pl)pl.b=0}
+  state.seeded.push("tira4cups")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1893,7 +1899,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-25d";
+const BUILD="2026-11-25e";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
