@@ -417,7 +417,7 @@ function vdWeek(){const d=pd(ui.date),dow=(d.getDay()+6)%7;let n=0;for(let i=0;i
 function vHabits(){const S=state.settings,h=habD(),w=(h.w||0)*0.25;
   const tile=(ic,lab,val,goal,unit,pct,ctrl)=>`<div class="hab ${pct>=1?"done":""}"><div class="hh"><span class="bi">${ic}</span><span class="grow"><b>${lab}</b><span class="mut sm">${val} / ${goal} ${unit}</span></span>${pct>=1?"<span class=ok>✓</span>":""}</div><div class="bar"><i style="width:${Math.min(100,pct*100)}%"></i></div>${ctrl}</div>`;
   return `<section class="card"><h2>Habits</h2><div class="habs">
-   ${tile("💧","Water",r1(w),S.water,"L",w/S.water,`<div class="stp"><button data-a="hab" data-k="w" data-d="-1" aria-label="Remove a glass">−</button><span class="sm">250 ml glass</span><button data-a="hab" data-k="w" data-d="1" aria-label="Add a glass">+</button></div>`)}
+   ${tile("💧","Water",r1(w),S.water,"L",w/S.water,`<div class="stp"><button data-a="hab" data-k="w" data-d="-0.8" aria-label="Remove a glass">−</button><span class="sm">200 ml glass</span><button data-a="hab" data-k="w" data-d="0.8" aria-label="Add a glass">+</button></div>`)}
    ${tile("😴","Sleep",h.s||0,S.sleep,"h",(h.s||0)/S.sleep,`<div class="stp"><button data-a="hab" data-k="s" data-d="-0.5" aria-label="Less sleep">−</button><span class="sm">last night</span><button data-a="hab" data-k="s" data-d="0.5" aria-label="More sleep">+</button></div>`)}
    ${tile("👟","Steps",fmt(h.st||0),fmt(S.steps),"",(h.st||0)/S.steps,`<input type="number" inputmode="numeric" id="steps" value="${h.st||""}" placeholder="Enter steps" aria-label="Steps today">`)}
    ${(()=>{const wk=vdWeek();return tile("💊","Vitamin D3",wk,5,"this week",wk/5,`<button class="${h.vd?"ghost":"pri"}" data-a="vd" style="width:100%">${h.vd?"✓ Taken today · undo":"Mark taken today"}</button>`)})()}
@@ -1909,7 +1909,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-26a";
+const BUILD="2026-11-26b";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
