@@ -1073,7 +1073,7 @@ function vPhotos(){const L=phs(),pose=ui.php||"front",D=phDates(pose),today=ymd(
   <section class="card"><h2>All photos · ${L.length}</h2>${grid}<p class="mut sm" style="margin-top:10px">Photos stay on this phone only (not in backups or the Claude version). Tap one to view or delete it.</p></section>`:""}`}
 async function importPack(f){try{const t=await f.text();let J;try{J=JSON.parse(t)}catch(e){toast("That isn't a photo pack file.","warn");return false}if(!J||!Array.isArray(J.items)){toast("That isn't a photo pack file.","warn");return false}
   state.photos=state.photos||[];const have=new Set(state.photos.map(p=>p.src).filter(Boolean));let n=0;toast(`Importing ${J.items.length} photos…`,"good");
-  for(let i=0;i<J.items.length;i++){const it=J.items[i],sig="pk|"+it.d+"|"+it.pose+"|"+i;if(have.has(sig)||!it.b)continue;const bin=Uint8Array.from(atob(it.b),c=>c.charCodeAt(0)),id="ph"+uid();await PDB.put(id,new Blob([bin],{type:"image/jpeg"}));state.photos.push({id,d:it.d,pose:it.pose||"front",t:Date.now()+i,src:sig});n++}
+  for(let i=0;i<J.items.length;i++){const it=J.items[i],sig="pk|"+it.d+"|"+it.pose+"|"+i+(it.tag?"|"+it.tag:"");if(have.has(sig)||!it.b)continue;const bin=Uint8Array.from(atob(it.b),c=>c.charCodeAt(0)),id="ph"+uid();await PDB.put(id,new Blob([bin],{type:"image/jpeg"}));state.photos.push({id,d:it.d,pose:it.pose||"front",t:Date.now()+i,src:sig,...(it.tag?{tag:it.tag}:{})});n++}
   try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
   commit();if(n){confetti();sfx("win");aiSoon()}toast(n?`📸 ${n} photos imported`:"Those photos are already here.","good");return true}
   catch(e){toast("Import failed. Use the home-screen app and try again.","warn");return false}}
@@ -1949,7 +1949,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-26j";
+const BUILD="2026-11-26k";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
