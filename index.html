@@ -413,6 +413,7 @@ function vHealthSet(){const S=state.settings;return `<details class="card" data-
   <label class="f" style="margin-top:10px">Or paste it here<textarea id="hkpaste" rows="4" placeholder="TRK&#10;steps: 8432&#10;sleep: 7.2 …"></textarea></label><button data-a="hkpaste">Import pasted text</button>
   <div class="two" style="margin-top:12px"><label class="f">Calories burned from<select data-ss="burn"><option value="watch" ${S.burn!=="est"?"selected":""}>Apple Watch (after 3 days)</option><option value="est" ${S.burn==="est"?"selected":""}>Formula estimate</option></select></label><label class="f">Watch calorie correction<select data-s="wf">${[[1,"None (100%)"],[0.95,"95%"],[0.9,"90% (recommended)"],[0.85,"85%"],[0.8,"80%"]].map(o=>`<option value="${o[0]}" ${String(S.wf??0.9)===String(o[0])?"selected":""}>${o[1]}</option>`).join("")}</select></label></div>
   <p class="mut sm">Watches tend to overestimate calories burned, so the forecast trims them by default. Right now it's using: <b>${burnTD(S).src}</b> → ${fmt(burnTD(S).v)} kcal/day.</p></details>`}
+function crWeek(){const d=pd(ui.date),dow=(d.getDay()+6)%7;let n=0;for(let i=0;i<=dow;i++){const x=new Date(d);x.setDate(d.getDate()-i);if(((state.hab||{})[ymd(x)]||{}).cr)n++}return n}
 function vdWeek(){const d=pd(ui.date),dow=(d.getDay()+6)%7;let n=0;for(let i=0;i<=dow;i++){const x=new Date(d);x.setDate(d.getDate()-i);if(((state.hab||{})[ymd(x)]||{}).vd)n++}return n}
 function vHabits(){const S=state.settings,h=habD(),w=(h.w||0)*0.25;
   const tile=(ic,lab,val,goal,unit,pct,ctrl)=>`<div class="hab ${pct>=1?"done":""}"><div class="hh"><span class="bi">${ic}</span><span class="grow"><b>${lab}</b><span class="mut sm">${val} / ${goal} ${unit}</span></span>${pct>=1?"<span class=ok>✓</span>":""}</div><div class="bar"><i style="width:${Math.min(100,pct*100)}%"></i></div>${ctrl}</div>`;
@@ -420,6 +421,7 @@ function vHabits(){const S=state.settings,h=habD(),w=(h.w||0)*0.25;
    ${tile("💧","Water",r1(w),S.water,"L",w/S.water,`<div class="stp"><button data-a="hab" data-k="w" data-d="-0.8" aria-label="Remove a glass">−</button><span class="sm">200 ml glass</span><button data-a="hab" data-k="w" data-d="0.8" aria-label="Add a glass">+</button></div>`)}
    ${tile("😴","Sleep",h.s||0,S.sleep,"h",(h.s||0)/S.sleep,`<div class="stp"><button data-a="hab" data-k="s" data-d="-0.5" aria-label="Less sleep">−</button><span class="sm">last night</span><button data-a="hab" data-k="s" data-d="0.5" aria-label="More sleep">+</button></div>`)}
    ${tile("👟","Steps",fmt(h.st||0),fmt(S.steps),"",(h.st||0)/S.steps,`<input type="number" inputmode="numeric" id="steps" value="${h.st||""}" placeholder="Enter steps" aria-label="Steps today">`)}
+   ${state.settings.crStart?(()=>{const wk=crWeek();return tile("💪","Creatine 5 g",wk,7,"this week",wk/7,`<button class="${h.cr?"ghost":"pri"}" data-a="cr" style="width:100%">${h.cr?"✓ Taken today · undo":"Mark taken today"}</button>`)})():""}
    ${(()=>{const wk=vdWeek();return tile("💊","Vitamin D3",wk,5,"this week",wk/5,`<button class="${h.vd?"ghost":"pri"}" data-a="vd" style="width:100%">${h.vd?"✓ Taken today · undo":"Mark taken today"}</button>`)})()}
   </div></section>`}
 function hashS(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)}
@@ -818,6 +820,7 @@ function vForecast(){
   const cur={bf:F.pb,sm:F.sm0,w:F.L.w,waist:latest("waist")};
   const goal=(lab,c,g,e,unit,down)=>{if(!g||c==null)return"";const done=down?c<=g:c>=g;return`<div class="stat goal"><div class="mut sm">${lab} goal</div><div class="num">${r1(c)} → ${g}<span style="font-size:16px"> ${unit}</span></div><div class="sm ${done?"ok":""}">${done?"Reached ✓":e?`about ${dt(e.t)} · week ${e.i}`:"not within 3 years at this pace"}</div></div>`};
   const why=[`Eating ${fmt(F.kIn)} kcal (${F.useLog?`your average over the last ${F.ai.n} logged day${F.ai.n>1?"s":""}`:"your target"}) against a burn of about ${fmt(F.td)} (${F.BT?F.BT.src:"estimate"}): a ${F.defLog>=0?fmt(F.defLog)+" kcal deficit":fmt(-F.defLog)+" kcal surplus"} a day.`+(F.sc?` Your scans show ${F.sc.perWk<=0?"−":"+"}${r1(Math.abs(F.sc.perWk))} kg fat a week over ${Math.round(F.sc.span)} days, so the forecast blends that in (${Math.round(F.wS*100)}%) and uses ${fmt(F.def)} kcal a day.`:""),
+    state.settings.crStart?`Creatine since ${new Date(pd(state.settings.crStart)).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}: scans after that show about 1–2 kg extra water in the muscle, so part of the muscle jump on the next InBody is water.`:"",
     F.spw<1?`Training under once a week, so muscle is expected to drop slowly.`:`Muscle: about ${r1(F.rate*4.3)} kg a month to start, slowing over time, from the drivers below.`];
   const dot=o=>o===2?"🟢":o===1?"🟡":"🔴",pct=m=>{const v=Math.round((m-1)*100);return v===0?"±0%":(v>0?"+":"−")+Math.abs(v)+"%"};
   const drv=`<h3 style="margin:14px 0 6px">What's driving your muscle forecast</h3><div class="mut sm" style="margin-bottom:6px">Each one speeds up or slows your muscle gain. Updated from your logs every day.</div>${F.fac.map(x=>`<div class="row" style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line)"><span>${dot(x.ok)}</span><span>${x.ic}</span><span class="grow" style="flex:1"><b>${x.lab}</b> <span class="mut sm">${esc(x.val)}</span></span><b class="sm" style="color:${x.m>1.001?"var(--grn,#22c55e)":x.m<0.999?"var(--red)":"var(--mut)"}">${pct(x.m)}</b></div>`).join("")}`;
@@ -1747,6 +1750,7 @@ document.addEventListener("click",e=>{
   else if(a==="owdone"){ui.owEdit=0;ui.enter=1;render()}
   else if(a==="owmv"){const S=state.settings;let o=(S.ow&&S.ow.length?[...S.ow]:Object.keys(OW));for(const k of Object.keys(OW))if(!o.includes(k))o.push(k);const i=o.indexOf(b.dataset.k),j=i+ +b.dataset.d;if(j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];S.ow=o;commit()}
   else if(a==="owhide"){const S=state.settings,H=S.owh||[],k=b.dataset.k;S.owh=H.includes(k)?H.filter(x=>x!==k):[...H,k];commit()}
+  else if(a==="cr"){const was=habD().cr;setHab("cr",was?0:1);if(!was)toast(`💪 Creatine ticked · ${crWeek()}/7 this week`,"good")}
   else if(a==="vd"){const was=habD().vd;setHab("vd",was?0:1);if(!was)toast(`💊 Vitamin D3 ticked · ${vdWeek()}/5 this week`,"good")}
   else if(a==="hab"){const h=habD(),k=b.dataset.k;setHab(k,r1((h[k]||0)+parseFloat(b.dataset.d)));if(k==="w"&&+b.dataset.d>0)toast(`💧 ${r1(((habD().w)||0)*0.25)} L today`,"good")}
   else if(a==="go"){location.hash=b.dataset.k}
@@ -1945,6 +1949,7 @@ try{state.seeded=state.seeded||[];if(!state.seeded.includes("grill1126")){const 
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("grill1126b")){const e=(state.logs["2026-11-26"]||[]).find(x=>/^Restaurant grilled chicken/.test(x.n));if(e)Object.assign(e,{n:"Restaurant grilled chicken breast (~290 g cooked)",k:508,p:87,c:0,f:19});state.seeded.push("grill1126b")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("grill1126c")){const e=(state.logs["2026-11-26"]||[]).find(x=>/^Restaurant grilled chicken/.test(x.n));if(e)Object.assign(e,{n:"Restaurant grilled chicken breast (~250 g cooked)",k:438,p:75,c:0,f:16});state.seeded.push("grill1126c")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("realchoc1")){const N="Real Nutrition chocolate";if(!state.foods.some(f=>f.n===N))state.foods.unshift({id:uid(),n:N,u:"1 piece (16 g)",k:70,p:1,c:10,f:3.5});const d="2026-11-26";(state.logs[d]=state.logs[d]||[]).push({id:uid(),n:N,k:70,p:1,c:10,f:3.5,q:1});state.seeded.push("realchoc1")}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("crstart")){state.settings.crStart="2026-11-27";state.hab=state.hab||{};const h=state.hab["2026-11-27"]=state.hab["2026-11-27"]||{};h.cr=1;state.seeded.push("crstart")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1953,7 +1958,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-27d";
+const BUILD="2026-11-27e";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
