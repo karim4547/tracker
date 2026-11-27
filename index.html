@@ -1963,6 +1963,7 @@ try{state.seeded=state.seeded||[];if(!state.seeded.includes("ingmore1")){const A
   const have=new Set(state.ing.map(x=>x.n.toLowerCase()));for(const[c,n,k,p,cb,f,pc]of A){const ex=state.ing.find(x=>x.n.toLowerCase()===n.toLowerCase());if(ex){if(pc&&!ex.pc)ex.pc=pc;continue}const x={id:uid(),cat:c,n,k,p,c:cb,f};if(pc)x.pc=pc;state.ing.push(x)}
   const pcs={"Tortilla wrap":60,"Eggs, whole":55,"Kiri":18,"Baladi bread":90,"Toast":25};for(const x of state.ing)for(const k in pcs)if(x.n.startsWith(k)&&!x.pc)x.pc=pcs[k];
   state.seeded.push("ingmore1")}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("ccream1")){const A=[["Dairy & cheese","Cooking cream (full fat)",195,2.5,3.5,19],["Dairy & cheese","Cooking cream (light)",120,3,4.5,10]];for(const[c,n,k,p,cb,f]of A)if(!state.ing.some(x=>x.n===n))state.ing.push({id:uid(),cat:c,n,k,p,c:cb,f,tb:15});state.seeded.push("ccream1")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1971,7 +1972,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-27k";
+const BUILD="2026-11-27l";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
