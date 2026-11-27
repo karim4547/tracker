@@ -1954,6 +1954,7 @@ try{state.seeded=state.seeded||[];if(!state.seeded.includes("wrap1127")){const d
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("domtylabel")){const f=state.foods.find(x=>/domty.*tanour/i.test(x.n));if(f)Object.assign(f,{u:"1 loaf",k:114,p:13.9,c:10,f:2});const e=(state.logs["2026-11-27"]||[]).find(x=>/^Chicken wrap \(Domty/.test(x.n));if(e)Object.assign(e,{k:533,p:51,c:36,f:22});state.seeded.push("domtylabel")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("domtylabel2")){const f=state.foods.find(x=>/domty.*tanour/i.test(x.n));if(f)Object.assign(f,{u:"1 loaf (35 g)",k:114,p:13.9,c:13.5,f:0.4});const e=(state.logs["2026-11-27"]||[]).find(x=>/^Chicken wrap \(Domty/.test(x.n));if(e)Object.assign(e,{k:533,p:51,c:39.5,f:20.4});state.seeded.push("domtylabel2")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("wraptom")){const e=(state.logs["2026-11-27"]||[]).find(x=>/^Chicken wrap \(Domty/.test(x.n));if(e)Object.assign(e,{k:542,p:51.4,c:41.5,f:20.5});state.seeded.push("wraptom")}}catch(e){}
+try{state.seeded=state.seeded||[];if(!state.seeded.includes("wraptom30")){const e=(state.logs["2026-11-27"]||[]).find(x=>/^Chicken wrap \(Domty/.test(x.n));if(e)Object.assign(e,{k:538,p:51.3,c:40.7,f:20.5});state.seeded.push("wraptom30")}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("bulkbar1")){if(!state.foods.some(f=>/^Bulk Muscle protein bar/i.test(f.n)))state.foods.unshift({id:uid(),n:"Bulk Muscle protein bar (white choco cheesecake)",u:"1 bar (70 g)",k:291,p:20,c:32.5,f:9});state.seeded.push("bulkbar1");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("hidefly")){state.hiddenLifts=state.hiddenLifts||[];const ks=new Set(["dumbbell fly"]);for(const W of state.workouts)for(const e of W.ex)if(/(dumbbell|db) ?fly/i.test(e.n))ks.add(norm(e.n));for(const k of ks)if(!state.hiddenLifts.includes(k))state.hiddenLifts.push(k);state.seeded.push("hidefly");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
 try{state.seeded=state.seeded||[];if(!state.seeded.includes("inbody1122")){const o=state.body.find(q=>q.d==="2026-11-22"),x={w:70.5,smm:30.9,bfm:16.4,pbf:23.2};if(o)Object.assign(o,x);else state.body.push({d:"2026-11-22",...x});state.body.sort((a,b)=>a.d.localeCompare(b.d));state.seeded.push("inbody1122");localStorage.setItem("ft-state",JSON.stringify(state))}}catch(e){}
@@ -1962,7 +1963,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-27i";
+const BUILD="2026-11-27j";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
