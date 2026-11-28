@@ -1451,7 +1451,7 @@ const STD=[
  [/goblet/,"Goblet squat",[.2,.35,.5,.7,.9],"bw"],
  [/front squat/,"Front squat",[.6,1,1.25,1.75,2.25],"bw"],
  [/squat/,"Squat",[.75,1.25,1.5,2.25,2.75],"bw"],
- [/smith.*(romanian|rdl)/,"Smith machine RDL (bar weight not counted)",[.6,.95,1.3,1.8,2.35],"bw"],
+ [/smith.*(romanian|rdl)/,"Smith machine RDL (plates only, bar not counted)",[.4,.7,1.05,1.5,2],"bw"],
  [/romanian|rdl|stiff/,"Romanian deadlift",[.75,1.1,1.5,2,2.6],"bw"],
  [/deadlift/,"Deadlift",[1,1.5,2,2.5,3],"bw"],
  [/seated calf/,"Seated calf raise",[.3,.6,1,1.5,2],"bw"],
@@ -1977,7 +1977,7 @@ ui.enter=1;if(ui.restEnd>Date.now())restI=setInterval(tickRest,250);else ui.rest
 render();
 setTimeout(()=>cloudPull(),800);window.__cp=cloudPull;
 }
-const BUILD="2026-11-28d";
+const BUILD="2026-11-28e";
 (function(){let drag=null;const set=(el,x)=>{const r=el.getBoundingClientRect();el.style.setProperty("--x",Math.max(0,Math.min(100,(x-r.left)/r.width*100))+"%")};
   document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("#phcmp");if(el){drag=el;set(el,e.clientX)}});
   document.addEventListener("pointermove",e=>{if(drag)set(drag,e.clientX)});
